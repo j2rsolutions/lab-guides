@@ -63,7 +63,7 @@ Looking in indexes: https://libraries.cgr.dev/python/simple/
 Same move for npm:
 
 ```bash
-npm config set registry https://libraries.cgr.dev/npm/
+npm config set registry https://libraries.cgr.dev/javascript/
 npm install axios
 ```
 
