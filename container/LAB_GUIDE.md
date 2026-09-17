@@ -57,8 +57,10 @@ crane manifest cgr.dev/chainguard/nginx:latest | jq -r '.manifests[].platform.ar
 > ARE the lab.
 
 
-**Record** the two nginx sizes on the scorecard. Smaller means faster pulls/cold starts, less
-registry and network cost, a smaller scan surface, and fewer files for an attacker to use.
+**Record** the two nginx sizes on the scorecard — then the python pair right below them
+(`python` vs `cgr.dev/chainguard/python`; the gap is even wider). Smaller means faster
+pulls/cold starts, less registry and network cost, a smaller scan surface, and fewer files
+for an attacker to use.
 
 ---
 
@@ -82,6 +84,10 @@ grype cgr.dev/chainguard/nginx:latest
 # just the numbers, for the scorecard
 grype -q nginx:latest | tail -n +2 | wc -l
 grype -q cgr.dev/chainguard/nginx:latest | tail -n +2 | wc -l
+
+# the scorecard's python row works the same way
+grype -q python:latest | tail -n +2 | wc -l
+grype -q cgr.dev/chainguard/python:latest | tail -n +2 | wc -l
 
 # skeptics welcome: cross-check with a second scanner
 trivy image --severity HIGH,CRITICAL nginx:latest
