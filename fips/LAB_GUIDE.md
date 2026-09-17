@@ -39,6 +39,8 @@ swap rather than a research project.
 2. Log in with the username and password on your table card (`lab01`…`labNN`).
 3. Click **Your Lab Server (labNN)**. A terminal opens in the browser tab. (If you also see a
    **desktop** tile, that's a browser for later — the terminal is where the lab happens.)
+   **Tip:** ctrl-click (or middle-click) a tile to open it in a **new browser tab**, so you can keep
+   the terminal and the desktop open side by side.
 4. Clipboard: press **Ctrl+Alt+Shift** to open the side menu, paste into its clipboard box, then paste normally.
 
 Two images are pre-cached on your seat and two tiny scripts drive the whole lab:

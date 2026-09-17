@@ -34,7 +34,11 @@ you actually reintroduce a controlled risk.
 
 1. Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
 2. Log in with your table-card username/password (`lab01`…`labNN`).
-3. You get two tiles: **a terminal** and **a desktop** (Firefox, for reading the HTML scan report).
+3. You get two tiles: **a terminal** and **a desktop** (Firefox + a file manager, for reading the HTML scan report).
+
+> **Tip — keep both open at once.** A tile normally opens in the same browser tab. **Ctrl-click** (or
+> middle-click) a tile to open it in a **new browser tab** instead — so you can keep the **terminal**
+> running in one tab and the **desktop** (to view reports in Firefox) in another, side by side.
 
 Everything is staged in `~/labs/stig`: a `scan.sh` wrapper around OpenSCAP, the app source
 (`app.py` + `Dockerfile.app`), the guardrail demo (`Dockerfile.broken`), and two images already built —
@@ -62,25 +66,64 @@ Chainguard formally aligns its images to that SRG and publishes the scan content
 
 ## Lab 2 — Start compliant (~10 min)
 
-Your base is `python-fips` — a Chainguard image that is **STIG-hardened and FIPS** out of the box. Scan
-it against the GPOS SRG:
+Your base is `python-fips` — a Chainguard image that is **STIG-hardened and FIPS** out of the box.
+
+First, don't take the wrapper on faith. `scan.sh` is three lines around a stock tool — read it:
 
 ```bash
-./scan.sh $(docker images --format '{{.Repository}}:{{.Tag}}' | grep python-fips | head -1)
+cat scan.sh
+```
+
+No magic: it runs upstream **`oscap-docker`** against the DISA GPOS datastream and counts the failures.
+The proof that it isn't rigged to print "0" is to run it on a stock image and watch it find things. So
+scan the everyday baseline first — Docker Hub's own `python`:
+
+```bash
+./scan.sh python:latest
+```
+
+```
+  STIG rules FAILED: 6
+  report: /home/labuser/Desktop/stig-reports/report-python_latest.html   (open it in Firefox on your desktop)
+```
+
+Six real findings, against 396 evaluated rules — the scanner works, and it isn't grading on a curve.
+Now the Chainguard base, the exact same command:
+
+```bash
+./scan.sh $(docker images --format '{{.Repository}}:{{.Tag}}' | grep python-fips | grep -v dev | head -1)
 ```
 
 ```
   STIG rules FAILED: 0   (the rest are documented Not Applicable — no login service, no local users)
 ```
 
-Zero actionable findings, before you've done anything. That's the starting line most projects would
-kill a quarter to reach. It works because a minimal image satisfies most GPOS controls *by
-construction*: no local user accounts, no configured passwords, no remote-access service — and the rest
-carry no automated check and are documented N/A with rationale.
+**Zero — same scanner, same datastream, same day.** That's the starting line most projects would kill a
+quarter to reach, before you've done anything. A minimal image satisfies most GPOS controls *by
+construction*: no local user accounts, no configured passwords, no remote-access service; the rest carry
+no automated check and are documented N/A with rationale.
+
+> **Open both reports and see for yourself.** On your desktop, open the **STIG Reports** folder (or the
+> File Manager) and double-click each `report-*.html` — Firefox renders OpenSCAP's full CAT I/II/III
+> breakdown, rule by rule, pass and fail. The stock report shows you exactly which six rules tripped;
+> the python-fips report shows a clean sheet. That side-by-side IS the lab.
+
+Record both on the scorecard:
+
+| Image | Size | STIG rules failed |
+|---|---|---|
+| `python:latest` (Docker Hub stock) | 1.12 GB | 6 |
+| `python-fips` (Chainguard, hardened) | ~69 MB | 0 |
+
+Note where the gap really lives: the STIG delta is real but modest (6 → 0), because STIG/GPOS measures
+the **OS layer**. The dramatic difference is **16× the size** and — as the next lab shows — a vastly
+larger CVE surface. Compliance and vulnerabilities are two different axes; you're about to meet the
+second one.
 
 > How does OpenSCAP even scan an image with no shell? `oscap-docker` does an **offline scan** — it
 > mounts the image's filesystem read-only from *outside* and assesses it from the host. Nothing runs
-> inside the target, which is exactly why it works on minimal/distroless images.
+> inside the target, which is exactly why it works on minimal/distroless images — and why the same
+> wrapper scans stock python and hardened python-fips identically.
 
 ## Lab 3 — Develop on it, stay compliant (~15 min)
 
@@ -163,7 +206,7 @@ A compliant image nobody can *prove* is compliant doesn't move an ATO. You alrea
 from scanning `stig-demo:app`:
 
 ```bash
-ls out/                     # results.xml (machine-readable) + report.html (human-readable)
+ls ~/Desktop/stig-reports/   # per-image: results-<image>.xml (machine-readable) + report-<image>.html (human-readable)
 ```
 
 Hand the ISSO: the scan report on **your actual app image** (near-zero, with N/A rationale), plus the
