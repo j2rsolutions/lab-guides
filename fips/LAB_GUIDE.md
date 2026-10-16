@@ -37,10 +37,27 @@ swap rather than a research project.
 
 1. Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
 2. Log in with the username and password on your table card (`lab01`…`labNN`).
-3. Click **Your Lab Server (labNN)**. A terminal opens in the browser tab. (If you also see a
-   **desktop** tile, that's a browser for later — the terminal is where the lab happens.)
-   **Tip:** ctrl-click (or middle-click) a tile to open it in a **new browser tab**, so you can keep
-   the terminal and the desktop open side by side.
+3. **Your folder today: FIPS lab.** Sign in once. The portal shows one **folder per lab track**
+   running today; your welcome email says which folder is which. For this guide open the folder
+   named **FIPS lab**. On a single-lab day there are no folders — the same two tiles sit at the
+   portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
+   folder you get **two tiles** — both are your own seat:
+   - **FIPS lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
+   - **FIPS lab desktop (labNN)** — a **desktop** on the *same* server (Firefox, a File
+     Manager and a Terminal launcher; it's already logged in, no password to type). Today it's
+     for nothing you'll need — there is nothing to browse today. It's optional: in Lab 6 you
+     can open your evidence folder in the File Manager.
+
+   Other folders are **other servers**: files and images do not carry across. Everywhere below,
+   **your desktop tile** means **FIPS lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
+   on a single-lab day.
+
+   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
+   middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
+   side by side. Firefox on the desktop reaches anything listening on your seat
+   (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
+   Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
+   launcher isn't on your desktop, type it; same result.
 4. Clipboard: press **Ctrl+Alt+Shift** to open the side menu, paste into its clipboard box, then paste normally.
 
 Two images are pre-cached on your seat and two tiny scripts drive the whole lab:
@@ -53,12 +70,12 @@ docker images | grep -E 'fips-demo|python'
 | Image | What it is |
 |---|---|
 | `fips-demo:stock` | the public `cgr.dev/chainguard/python` — the image your service uses today |
-| `fips-demo:fips` | Chainguard `python-fips` — same Python, FIPS-validated OpenSSL module, **FIPS mode on** |
+| `fips-demo:fips` | Chainguard `python-fips` — same Python, FIPS-validated OpenSSL module, **FIPS mode on**; also ships Chainguard's *legacy-allowed* provider (on by default) so MD5/SHA-1 still work for **non-security** uses |
 
 | Script | What it proves |
 |---|---|
-| `./posture.sh <image>` | which OpenSSL is behind Python, and whether it is in FIPS mode |
-| `./refuse-weak.sh <image>` | the money shot: does the image *refuse* a non-approved algorithm? |
+| `./posture.sh <image>` | which OpenSSL is behind Python, whether the validated module is in FIPS mode, and what happens to MD5 — as a checksum and *as security* |
+| `./refuse-weak.sh <image>` | the money shot: does the image *refuse* MD5 used as security — and MD5 at all, in strict mode? |
 
 The demo is Python-native (`hashlib`), so what you see is exactly what your application code would see.
 
@@ -84,23 +101,25 @@ The auditor asks for the second one. Everything below is about making that state
 
 ## Lab 2 — Prove the stock image is *not* validated (~10 min)
 
-Look at what's providing crypto in the stock image, and whether it will compute a digest that FIPS
-mode must refuse (MD5):
+Look at what's providing crypto in the stock image: is a validated module running in FIPS mode, and
+what does it do with a non-approved algorithm (MD5) — as a checksum, and *as security* (an HMAC tag)?
 
 ```bash
 ./posture.sh fips-demo:stock
 ```
 
 ```
-OpenSSL: OpenSSL 3.x.x ...
-MD5:    computed  -> NOT in FIPS mode
-SHA-256: 2d711642b726b044 ... (approved, always works)
+OpenSSL:     OpenSSL 3.x.x ...
+FIPS mode:   off       -> NOT a validated module in FIPS mode (get_fips_mode=0)
+MD5 digest:  computed  -> nothing here to refuse it
+HMAC-MD5:    computed  -> MD5 accepted AS SECURITY: not FIPS mode
+SHA-256:     2d711642b726b044 ... (approved, always works)
 ```
 
-The library works. It computes strong hashes. It *also* happily computes MD5 — which is the tell:
-a validated module in FIPS mode would have refused it. This image is running the **default** OpenSSL
-provider, not the validated module in its approved mode. That is exactly the gap the questionnaire
-is probing.
+The library works. It computes strong hashes. It *also* happily signs with MD5 — which is the tell: a
+validated module in FIPS mode would have refused that. This image is running the **default** OpenSSL
+provider, not the validated module in its approved mode (`get_fips_mode=0` says so outright). That is
+exactly the gap the questionnaire is probing.
 
 Write down: **stock = not FIPS.** The app still serves — "works" was never the question.
 
@@ -115,17 +134,23 @@ Same check against the Chainguard FIPS image:
 ```
 
 ```
-OpenSSL: OpenSSL 3.x.x ...
-MD5:    REFUSED   -> FIPS mode active (ValueError)
-SHA-256: 2d711642b726b044 ... (approved, always works)
+OpenSSL:     OpenSSL 3.x.x ...
+FIPS mode:   ACTIVE    -> validated module in its approved mode (get_fips_mode=1)
+MD5 digest:  computed  -> allowed for NON-security use only (checksums; FIPS 140-3 IG 2.4.A)
+HMAC-MD5:    REFUSED   -> FIPS mode refuses MD5 as security
+SHA-256:     2d711642b726b044 ... (approved, always works)
 ```
 
-Two things changed and one didn't:
+Three things changed and one didn't:
 
-- **MD5 is refused.** Only a module running in FIPS mode does that. This is the state the auditor
-  wants to see.
-- **The OpenSSL behind Python is Chainguard's FIPS-validated build**, with the FIPS provider active
-  at startup — no environment variables, no config you have to remember to set.
+- **FIPS mode is active.** `get_fips_mode=1` — the OpenSSL behind Python is Chainguard's
+  FIPS-validated build with the FIPS provider active at startup. This is the state the auditor wants
+  to see.
+- **MD5 *as security* is refused.** Only a validated module running in FIPS mode does that.
+- **A plain MD5 *digest* still computes — on purpose.** FIPS 140-3 (IG 2.4.A) permits non-approved
+  digests for non-security uses (checksums, ETags, cache keys), and Chainguard ships a *legacy-allowed*
+  provider, on by default, so real apps don't fall over on a checksum. Lab 4 shows the switch that
+  turns even that off.
 - **SHA-256 still works.** Approved crypto is unaffected. Your application keeps running.
 
 Note what you did to get here: **nothing.** No code change, no `openssl.cnf`, no runtime flag. The FIPS
@@ -139,7 +164,9 @@ change is one line: the `FROM`.
 ## Lab 4 — Watch a non-approved algorithm get refused (~10 min)
 
 FIPS mode isn't just "strong crypto available" — it's "non-approved crypto *refused*." That refusal
-is the teaching moment, so run it on its own, on both images, and read the difference:
+is the teaching moment, so run it on its own, on both images, and read the difference. The script
+refuses two ways: MD5 **as security** (an HMAC tag — refused as shipped), and MD5 **at all** with the
+legacy-allowed provider switched off (`CHAINGUARD_LEGACY_ALLOWED=0`, the strict posture):
 
 ```bash
 ./refuse-weak.sh fips-demo:stock
@@ -147,33 +174,40 @@ is the teaching moment, so run it on its own, on both images, and read the diffe
 ```
 
 ```
-  MD5 computed — NOT FIPS mode
-  MD5 REFUSED — FIPS mode active (as it should be)
+  HMAC-MD5 computed — MD5 accepted as security: NOT FIPS mode
+  MD5 digest, strict mode: computed — nothing to refuse it: NOT FIPS mode
+```
+```
+  HMAC-MD5 REFUSED — FIPS mode active (as it should be)
+  MD5 digest, strict mode: REFUSED — only the validated module is loaded
 ```
 
 See the refusal for yourself, from Python, the way your code would:
 
 ```bash
-docker run --rm --entrypoint python fips-demo:fips -c 'import hashlib; hashlib.md5(b"x")'
+docker run --rm -e CHAINGUARD_LEGACY_ALLOWED=0 --entrypoint python fips-demo:fips -c 'import hashlib; hashlib.md5(b"x")'
 ```
 
 ```
 Traceback (most recent call last):
   ...
-ValueError: [digital envelope routines] unsupported
+_hashlib.UnsupportedDigestmodError: [digital envelope routines] unsupported
 ```
 
-That's the difference between *hoping* nobody used MD5 and *proving* nobody **could**. A validated
-module in FIPS mode actively closes the weak path; the only path left open is the approved one.
+(Drop the `-e` and ask for an HMAC instead — `hmac.new(b"k", b"x", hashlib.md5)` — and you get the
+same refusal as a `ValueError`, with no switch at all.)
 
-> **Facilitator beat — "but my app uses MD5 for checksums, not security."** Python has
-> `hashlib.md5(data, usedforsecurity=False)` for non-cryptographic uses (cache keys, ETags). Try it on
-> the FIPS image:
-> `docker run --rm --entrypoint python fips-demo:fips -c 'import hashlib; print(hashlib.md5(b"x", usedforsecurity=False).hexdigest())'`
-> If it computes, the image lets non-security uses through while refusing MD5 *as security* — exactly
-> the distinction an auditor draws. If it is refused too, the image runs the FIPS provider *only*, the
-> strictest posture, and even checksums must move to SHA-2. Either answer is a finding worth knowing
-> before the audit, and the refusal is how you find every call site that hasn't moved.
+That's the difference between *hoping* nobody used MD5 for security and *proving* nobody **could**. A
+validated module in FIPS mode actively closes the weak path; the only path left open is the approved one.
+
+> **Facilitator beat — "but my app uses MD5 for checksums, not security."** That is exactly the
+> distinction the standard draws, and the image draws it for you: as shipped, `hashlib.md5(data)`
+> computes (non-security use, permitted by FIPS 140-3 IG 2.4.A — Chainguard's *legacy-allowed*
+> provider, on by default in FIPS images built from September 2026), while `hmac.new(key, data,
+> hashlib.md5)` is refused. Python's own marker for the same idea is `hashlib.md5(data,
+> usedforsecurity=False)`; use it, and code reviewers can see the intent. If your auditor wants **zero**
+> MD5, ship strict — `ENV CHAINGUARD_LEGACY_ALLOWED=0` in the Dockerfile (Lab 5) — and every unmarked
+> checksum call fails loudly; that refusal is how you find every call site that hasn't moved to SHA-2.
 
 ---
 
@@ -184,8 +218,8 @@ the crypto your product actually does — hash a token, verify an HMAC — and r
 
 ```bash
 cat > ~/labs/fips/svc.py <<'EOF'
-import hashlib, hmac, ssl
-print("OpenSSL:", ssl.OPENSSL_VERSION)
+import hashlib, hmac, ssl, _hashlib
+print("OpenSSL:", ssl.OPENSSL_VERSION, "| FIPS mode:", "ACTIVE" if _hashlib.get_fips_mode() else "off")
 secret = b"demo-secret"
 token = hashlib.sha256(b"user:42").hexdigest()
 tag = hmac.new(secret, token.encode(), hashlib.sha256).hexdigest()
@@ -193,10 +227,14 @@ print("token  :", token[:16], "...   (SHA-256)")
 print("hmac   :", tag[:16], "...   (HMAC-SHA-256)")
 print("verify :", hmac.compare_digest(tag, hmac.new(secret, token.encode(), hashlib.sha256).hexdigest()))
 try:
-    hashlib.md5(b"legacy-checksum")
-    print("md5    : computed  -> this image is NOT in FIPS mode")
+    print("md5sum :", hashlib.md5(b"legacy-checksum").hexdigest()[:16], "...   (a checksum: non-security use)")
 except ValueError:
-    print("md5    : REFUSED   -> FIPS mode active")
+    print("md5sum : REFUSED   -> strict mode: even checksums must move to SHA-2")
+try:
+    hmac.new(secret, token.encode(), hashlib.md5)
+    print("md5 tag: computed  -> MD5 accepted as security: this image is NOT in FIPS mode")
+except ValueError:
+    print("md5 tag: REFUSED   -> FIPS mode active")
 EOF
 
 docker run --rm -v ~/labs/fips/svc.py:/svc.py --entrypoint python fips-demo:stock /svc.py
@@ -204,8 +242,25 @@ echo "----"
 docker run --rm -v ~/labs/fips/svc.py:/svc.py --entrypoint python fips-demo:fips  /svc.py
 ```
 
-Same code, same Python, same output for everything approved — and one line that differs: the FIPS
-image refuses the legacy call. **Your application didn't change; its cryptographic posture did.**
+```
+OpenSSL: OpenSSL 3.x.x ... | FIPS mode: off
+token  : ea3fd43be1e57d62 ...   (SHA-256)
+hmac   : be68d9d39613d91c ...   (HMAC-SHA-256)
+verify : True
+md5sum : 861f9980b13ac8df ...   (a checksum: non-security use)
+md5 tag: computed  -> MD5 accepted as security: this image is NOT in FIPS mode
+----
+OpenSSL: OpenSSL 3.x.x ... | FIPS mode: ACTIVE
+token  : ea3fd43be1e57d62 ...   (SHA-256)
+hmac   : be68d9d39613d91c ...   (HMAC-SHA-256)
+verify : True
+md5sum : 861f9980b13ac8df ...   (a checksum: non-security use)
+md5 tag: REFUSED   -> FIPS mode active
+```
+
+Same code, same Python, same output for everything approved *and* for the checksum — and one line
+that differs: the FIPS image refuses MD5 the moment it is used as security. **Your application didn't
+change; its cryptographic posture did.**
 
 Now ship it the way you'd ship for real — a Dockerfile whose base is the FIPS image:
 
@@ -217,6 +272,10 @@ ENTRYPOINT ["python", "/app/svc.py"]
 EOF
 docker build -q -t svc:fips ~/labs/fips && docker run --rm svc:fips
 ```
+
+> **Facilitator beat — shipping strict.** Add one line under `FROM` — `ENV CHAINGUARD_LEGACY_ALLOWED=0`
+> — rebuild, and the `md5sum` line flips to `REFUSED -> strict mode`. That is the posture for an
+> auditor who wants no MD5 anywhere: the image itself finds every checksum that still uses it.
 
 In your own repo, that `FROM` becomes `cgr.dev/<your-org>/python-fips:latest` (or the `-fips` variant
 of whatever runtime you ship: `nginx-fips`, `node-fips`, `jdk-fips`, …). Same pattern, same result.
@@ -248,6 +307,13 @@ syft "$FIPS_IMG" -o spdx-json > sbom.spdx.json
 ls -l
 ```
 
+> [!TIP]
+> **On your desktop (optional)** (**FIPS lab desktop (labNN)** — or **Your Lab Server desktop
+> (labNN)** on a single-lab day): **File Manager** → `fips-evidence` (the **FIPS lab** launcher
+> opens `~/labs/fips`; `~/fips-evidence` is the folder you just created next to it). Double-click
+> `posture.txt` and `refusal.txt` to read the two proofs; `sbom.spdx.json` opens in Firefox's JSON viewer
+> (`file:///home/labuser/fips-evidence/sbom.spdx.json`).
+
 You hand the reviewer: the active-module proof, the refusal proof, your own service's output on the
 validated image, the image signature, and an SBOM — plus a pointer to Chainguard's FIPS 140-3
 validation certificate for the module itself (Chainguard publishes the CMVP certificate number for its
@@ -259,15 +325,16 @@ FIPS images; cite it in the package).
 
 | Check | `fips-demo:stock` | `fips-demo:fips` |
 |---|---|---|
-| FIPS-validated module, FIPS mode active? | | |
-| MD5 (non-approved) refused? | | |
+| FIPS-validated module, FIPS mode active (`get_fips_mode`)? | | |
+| MD5 as security (HMAC-MD5) refused? | | |
+| MD5 digest refused in strict mode (`CHAINGUARD_LEGACY_ALLOWED=0`)? | | |
 | SHA-256 / HMAC-SHA-256 (approved) still work? | | |
 | your `svc.py` runs unchanged? | | |
 | signature verified + SBOM captured? | n/a | |
 
 ## Next steps
 
-1. **Run Lab 2 against one of your real service images** — does it compute MD5? Then it isn't in FIPS mode.
+1. **Run Lab 2 against one of your real service images** — `FIPS mode: off`, HMAC-MD5 computed? Then it isn't in FIPS mode.
 2. **Swap the base to the mapped `-fips` image** and re-run Labs 3–5 — module active, weak crypto
    refused, your code unchanged. Every refusal you hit is a real finding you'd otherwise have met at audit.
 3. **Bring your questionnaire to a working session** — J2R maps your stack to the validated modules and

@@ -34,11 +34,28 @@ you actually reintroduce a controlled risk.
 
 1. Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
 2. Log in with your table-card username/password (`lab01`…`labNN`).
-3. You get two tiles: **a terminal** and **a desktop** (Firefox + a file manager, for reading the HTML scan report).
+3. **Your folder today: STIG lab.** Sign in once. The portal shows one **folder per lab track**
+   running today; your welcome email says which folder is which. For this guide open the folder
+   named **STIG lab**. On a single-lab day there are no folders — the same two tiles sit at the
+   portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
+   folder you get **two tiles** — both are your own seat:
+   - **STIG lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
+   - **STIG lab desktop (labNN)** — a **desktop** on the *same* server (Firefox, a File
+     Manager and a Terminal launcher; it's already logged in, no password to type). Today it's
+     for reading the OpenSCAP HTML reports `scan.sh` writes to `~/Desktop/stig-reports` —
+     double-click **STIG Reports** (Labs 2 and 5).
 
-> **Tip — keep both open at once.** A tile normally opens in the same browser tab. **Ctrl-click** (or
-> middle-click) a tile to open it in a **new browser tab** instead — so you can keep the **terminal**
-> running in one tab and the **desktop** (to view reports in Firefox) in another, side by side.
+   Other folders are **other servers**: files and images do not carry across. Everywhere below,
+   **your desktop tile** means **STIG lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
+   on a single-lab day.
+
+   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
+   middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
+   side by side. Firefox on the desktop reaches anything listening on your seat
+   (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
+   Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
+   launcher isn't on your desktop, type it; same result.
+4. Clipboard: press **Ctrl+Alt+Shift** to open the side menu, paste into its clipboard box, then paste normally.
 
 Everything is staged in `~/labs/stig`: a `scan.sh` wrapper around OpenSCAP, the app source
 (`app.py` + `Dockerfile.app`), the guardrail demo (`Dockerfile.broken`), and two images already built —
@@ -103,7 +120,8 @@ quarter to reach, before you've done anything. A minimal image satisfies most GP
 construction*: no local user accounts, no configured passwords, no remote-access service; the rest carry
 no automated check and are documented N/A with rationale.
 
-> **Open both reports and see for yourself.** On your desktop, open the **STIG Reports** folder (or the
+> **Open both reports and see for yourself.** On your desktop (**STIG lab desktop (labNN)** — or
+> **Your Lab Server desktop (labNN)** on a single-lab day), open the **STIG Reports** folder (or the
 > File Manager) and double-click each `report-*.html` — Firefox renders OpenSCAP's full CAT I/II/III
 > breakdown, rule by rule, pass and fail. The stock report shows you exactly which six rules tripped;
 > the python-fips report shows a clean sheet. That side-by-side IS the lab.

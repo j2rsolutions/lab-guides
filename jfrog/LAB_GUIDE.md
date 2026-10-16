@@ -44,12 +44,39 @@ does the patching argument for them.
 > is always: *which system am I talking to, and which password did I just use?*
 
 1. Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
-2. Log in with the credentials on your table card (`lab01`…`labNN`). Click the one tile you
-   see: **Your Lab Server (labNN)** — a terminal opens in the browser.
-3. Your card also carries your **JFrog** URL, login and **project key** (= your seat name,
-   e.g. `lab01`) — open it in a second browser tab. You are the **Project Admin** of that
-   project: pick it in the **project picker, top-left** of the JFrog UI, and its repos, Xray
-   watches and policies are all yours today.
+2. Log in with the credentials on your table card (`lab01`…`labNN`).
+3. **Your folder today: JFrog lab.** Sign in once. The portal shows one **folder per lab track**
+   running today; your welcome email says which folder is which. For this guide open the folder
+   named **JFrog lab**. On a single-lab day there are no folders — the same two tiles sit at the
+   portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
+   folder you get **two tiles** — both are your own seat:
+   - **JFrog lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
+   - **JFrog lab desktop (labNN)** — a **desktop** on the *same* server (Firefox, a File
+     Manager and a Terminal launcher; it's already logged in, no password to type). Today it's
+     for the JFrog Platform UI — and OctoShop at `http://localhost:30080` in Lab 5.
+
+   Other folders are **other servers**: files and images do not carry across. Everywhere below,
+   **your desktop tile** means **JFrog lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
+   on a single-lab day.
+
+   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
+   middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
+   side by side. Firefox on the desktop reaches anything listening on your seat
+   (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
+   Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
+   launcher isn't on your desktop, type it; same result.
+4. **Open the JFrog UI.** Your card — and the JFrog block of your welcome email — also carries
+   your **JFrog** URL, login and **project key** (= your seat name, e.g. `lab01`). Two places to
+   open it — pick one and stay there:
+   - **(a)** a second tab on your laptop, or
+   - **(b)** **Firefox on your desktop tile** (**JFrog lab desktop (labNN)** — or **Your Lab Server
+     desktop (labNN)** on a single-lab day) — double-click **JFrog Platform**, or type
+     `https://<your JFrog host>` (it's `echo $JF_HOST` in the terminal).
+
+   **Use (b) if your laptop's browser is locked down or can't reach the host** — the seat always
+   can. Same JFROG password either way. You are the **Project Admin** of that project: pick it
+   in the **project picker, top-left** of the JFrog UI, and its repos, Xray watches and policies
+   are all yours today.
 
 > [!NOTE]
 > **New in this lab: one JFrog Project per seat.** Earlier runs of this lab put every seat in one
@@ -68,8 +95,8 @@ does the patching argument for them.
 > block your images — and the names in your project are yours alone, so `lab07-block-high` and
 > `lab12-block-high` never fight. Everywhere the guide says `$JF_DEV` or `$JF_PROJECT`, it means
 > *your* repo and *your* project.
-4. Clipboard: **Ctrl+Alt+Shift** opens the side menu → paste into its clipboard box.
-5. Your seat already knows where it lives — three variables are exported in every shell:
+5. Clipboard: **Ctrl+Alt+Shift** opens the side menu → paste into its clipboard box.
+6. Your seat already knows where it lives — three variables are exported in every shell:
 
    ```bash
    echo $JF_HOST $JF_PROJECT $JF_DEV
@@ -112,7 +139,9 @@ docker images | grep $JF_HOST
 
 The `cgr` repo is a *remote* repo proxying `cgr.dev`: one URL for every Dockerfile in the
 org, cached at the edge, and — the part that matters — **everything that passes through it is
-visible to Xray**. In the JFrog UI: Artifactory → Artifacts → `cgr` — there's your pull,
+visible to Xray**. In the JFrog UI — your laptop tab, or Firefox on your desktop tile (**JFrog lab
+desktop (labNN)** — or **Your Lab Server desktop (labNN)** on a single-lab day):
+Artifactory → Artifacts → `cgr` — there's your pull,
 already indexed. (`cgr` is a shared, platform-wide repo — if it's missing from the tree, set the
 top-left project picker to *All*.)
 
@@ -142,7 +171,8 @@ docker build -t $JF_HOST/$JF_DEV/octoshop-web:v2 -f Dockerfile.cg .
 docker push $JF_HOST/$JF_DEV/octoshop-web:v2
 ```
 
-Now the money shot. In the JFrog UI, **with your project selected in the top-left picker**:
+Now the money shot. In the JFrog UI (laptop tab or desktop-tile Firefox), **with your project
+selected in the top-left picker**:
 **Xray → Scans List** (or Artifactory → your `$JF_DEV` repo → select the artifact → Xray tab).
 Scans List is filtered by that picker — with no project selected you'll see nothing. Give
 indexing a minute, then put v1 and v2 side by side:
@@ -348,6 +378,13 @@ curl -s localhost:30080
 ```
 OctoShop up · 3 items in catalog · served via proxy→web→db
 ```
+
+> [!TIP]
+> **On your desktop** (**JFrog lab desktop (labNN)** — or **Your Lab Server desktop (labNN)** on a
+> single-lab day): double-click **OctoShop** — or open **Firefox** at `http://localhost:30080`.
+> The 502 is gone in a real browser too. Keep the tab: after the `ErrImagePull` swap below,
+> refresh it — **it still serves**, because Kubernetes never took the working pod down for an
+> image it couldn't pull.
 
 The 502 is gone — the app is serving, and the image came from exactly one place: the repo
 your policy governs. Now try the ungoverned path:

@@ -26,9 +26,27 @@ live session.
 
 1. Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
 2. Log in with the username and password on your table card (`lab01`…`labNN`).
-3. Click the one tile you see: **Your Lab Server (labNN)** — labeled with your seat number.
-   A terminal opens in the browser tab. (If you land straight in a terminal, that's normal:
-   Guacamole skips the tile screen when your account has exactly one connection.)
+3. **Your folder today: Core lab.** Sign in once. The portal shows one **folder per lab track**
+   running today; your welcome email says which folder is which. For this guide open the folder
+   named **Core lab**. On a single-lab day there are no folders — the same two tiles sit at the
+   portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
+   folder you get **two tiles** — both are your own seat:
+   - **Core lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
+   - **Core lab desktop (labNN)** — a **desktop** on the *same* server (Firefox, a File
+     Manager and a Terminal launcher; it's already logged in, no password to type). Today it's
+     for reading the staged SBOMs in Firefox's JSON viewer (Lab 1) and talking to your LLM
+     endpoint in a real browser (Lab 4).
+
+   Other folders are **other servers**: files and images do not carry across. Everywhere below,
+   **your desktop tile** means **Core lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
+   on a single-lab day.
+
+   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
+   middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
+   side by side. Firefox on the desktop reaches anything listening on your seat
+   (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
+   Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
+   launcher isn't on your desktop, type it; same result.
 4. Clipboard: press **Ctrl+Alt+Shift** to open the side menu, paste into its clipboard box, close
    the menu, then paste normally.
 
@@ -76,6 +94,15 @@ syft convert ~/labs/artifacts/pytorch-upstream-sbom.spdx.json -o table | less
 
 Illustrative counts: ~**384** packages upstream, ~**62** in the Chainguard image. Record your
 numbers in the scorecard below.
+
+> [!TIP]
+> **On your desktop** (**Core lab desktop (labNN)** — or **Your Lab Server desktop (labNN)** on a
+> single-lab day): double-click **SBOMs** (opens `~/labs/artifacts` in the File Manager)
+> and open `pytorch-upstream-sbom.spdx.json` — or type
+> `file:///home/labuser/labs/artifacts/pytorch-upstream-sbom.spdx.json` into Firefox. In the
+> JSON viewer expand `packages` and use the **Filter JSON** box: type `conda` or `cuda` — that's
+> the freight. Open `pytorch-chainguard-sbom.spdx.json` the same way and filter again: a much
+> shorter list, same torch.
 
 > [!NOTE]
 > ⏱ **Want to generate the inventory yourself?** You can — `syft -v pytorch/pytorch:latest`
@@ -136,6 +163,11 @@ Training takes a couple of minutes on this box. When it finishes, a
 Expected output ends with the classifier's verdict: `octopus`. Zero-CVE images aren't demo-ware —
 you just trained and served a model on one.
 
+> [!TIP]
+> **On your desktop (optional):** double-click **Octopus demo** — or **File Manager** → `labs` → `octopus` —
+> `octopus_whale_penguin_model.pt` is the model you just trained; double-click `octopus.jpg` to
+> see what it classified.
+
 ---
 
 ## Lab 4 — Serve an LLM
@@ -151,6 +183,11 @@ docker run -d --name llm -p 11434:11434 -v ~/labs/models:/home/nonroot/.ollama c
 ```bash
 curl -s localhost:11434/api/generate -d '{"model":"gemma3:1b","prompt":"Why is the sky blue?","stream":false}' | jq -r .response
 ```
+
+> [!TIP]
+> **On your desktop:** double-click **Ollama** — or open **Firefox** and type `http://localhost:11434` — it answers
+> `Ollama is running`. Then `http://localhost:11434/api/tags`: the JSON viewer lists `gemma3:1b` —
+> the pre-staged weights your endpoint is serving.
 
 A real LLM answer, from a hardened image, on a 2-vCPU box. One more thing worth noticing:
 
@@ -180,6 +217,12 @@ jq '.packages | length' pytorch-sbom.json
 
 That's a machine-readable inventory of everything in the image — the artifact behind every
 "do you have an SBOM?" compliance question.
+
+> [!TIP]
+> **On your desktop:** `pytorch-sbom.json` landed in the folder you ran syft from (`pwd` —
+> `~/labs/octopus` if you came straight from Lab 3). **File Manager** → that folder → open it, or
+> type `file:///home/labuser/labs/octopus/pytorch-sbom.json` into Firefox — the same 62-package
+> inventory, in a form an assessor can actually read.
 
 ## Scorecard
 

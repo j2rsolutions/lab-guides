@@ -25,7 +25,27 @@ nothing to install locally. Work top to bottom; each lab stands alone if you fal
 
 1. Open the portal (the URL on your table card, e.g. the portal URL from your welcome email).
 2. Log in with the username/password on your card (`lab01`…`labNN`).
-3. Click the one tile you see: **Your Lab Server (labNN)**. A terminal opens in the browser tab.
+3. **Your folder today: Core lab.** Sign in once. The portal shows one **folder per lab track**
+   running today; your welcome email says which folder is which. For this guide open the folder
+   named **Core lab**. On a single-lab day there are no folders — the same two tiles sit at the
+   portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
+   folder you get **two tiles** — both are your own seat:
+   - **Core lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
+   - **Core lab desktop (labNN)** — a **desktop** on the *same* server (Firefox, a File
+     Manager and a Terminal launcher; it's already logged in, no password to type). Today it's
+     for nothing you'll need — this lab is all terminal output. It's there if you'd rather
+     browse `~/labs` in a file manager, and you'll use it on the other lab days.
+
+   Other folders are **other servers**: files and images do not carry across. Everywhere below,
+   **your desktop tile** means **Core lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
+   on a single-lab day.
+
+   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
+   middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
+   side by side. Firefox on the desktop reaches anything listening on your seat
+   (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
+   Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
+   launcher isn't on your desktop, type it; same result.
 4. Clipboard: press **Ctrl+Alt+Shift** to open the Guacamole side menu, paste into its clipboard
    box, close the menu, then paste into the terminal. (Paste one command at a time — a multi-line
    paste can merge lines.)
@@ -61,6 +81,19 @@ crane manifest cgr.dev/chainguard/nginx:latest | jq -r '.manifests[].platform.ar
 (`python` vs `cgr.dev/chainguard/python`; the gap is even wider). Smaller means faster
 pulls/cold starts, less registry and network cost, a smaller scan surface, and fewer files
 for an attacker to use.
+
+> [!TIP]
+> **Optional, on your desktop:** the two nginx builds can serve side by side. In the terminal:
+>
+> ```bash
+> docker run -d --rm --name oss -p 8081:80   nginx:latest
+> docker run -d --rm --name cg  -p 8080:8080 cgr.dev/chainguard/nginx:latest
+> ```
+>
+> Then open **Firefox** on your desktop tile (**Core lab desktop (labNN)** — or **Your Lab Server
+> desktop (labNN)** on a single-lab day) at `http://localhost:8081` and `http://localhost:8080` —
+> the same welcome page from two supply chains (the Chainguard build listens on 8080 because it
+> runs as a non-root user and can't bind 80). `docker rm -f oss cg` when you're done.
 
 ---
 

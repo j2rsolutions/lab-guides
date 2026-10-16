@@ -25,7 +25,27 @@ them in the evidence sheet at the bottom; together they're the outline of a supp
 
 1. Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
 2. Log in with the username and password on your table card (`lab01`…`labNN`).
-3. Click the one tile you see: **Your Lab Server (labNN)**. A terminal opens in the browser tab.
+3. **Your folder today: Core lab.** Sign in once. The portal shows one **folder per lab track**
+   running today; your welcome email says which folder is which. For this guide open the folder
+   named **Core lab**. On a single-lab day there are no folders — the same two tiles sit at the
+   portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
+   folder you get **two tiles** — both are your own seat:
+   - **Core lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
+   - **Core lab desktop (labNN)** — a **desktop** on the *same* server (Firefox, a File
+     Manager and a Terminal launcher; it's already logged in, no password to type). Today it's
+     for reading the SBOM apko generates (Lab 2) and the air-gap registry's catalog (Lab 5) in
+     Firefox's JSON viewer, and hitting the Java app (Lab 3) in a real browser.
+
+   Other folders are **other servers**: files and images do not carry across. Everywhere below,
+   **your desktop tile** means **Core lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
+   on a single-lab day.
+
+   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
+   middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
+   side by side. Firefox on the desktop reaches anything listening on your seat
+   (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
+   Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
+   launcher isn't on your desktop, type it; same result.
 4. Clipboard: press **Ctrl+Alt+Shift** to open the side menu, paste into its clipboard box,
    close the menu, then paste normally.
 
@@ -116,6 +136,14 @@ grype hello:adv
 
 Expect a clean (or near-clean) result on an image you assembled yourself.
 
+> [!TIP]
+> **On your desktop** (**Core lab desktop (labNN)** — or **Your Lab Server desktop (labNN)** on a
+> single-lab day): double-click **apko SBOMs** (opens `~/labs/apko` in the File Manager) and
+> open `sbom-x86_64.spdx.json` — or type `file:///home/labuser/labs/apko/sbom-x86_64.spdx.json`
+> into Firefox. The JSON viewer shows `packages`: expand it — every entry is one of the packages
+> you declared in `hello.yaml` (plus their dependencies), with its version and license. Nothing
+> else is in there, because nothing else was declared.
+
 > [!NOTE]
 > **Why isn't `hello.py` inside the image?** apko has no `COPY` — contents come from declared,
 > signed packages, full stop. That constraint is the point: nothing enters the image that isn't
@@ -160,6 +188,11 @@ docker run -d --rm -p 8080:8080 javapp:adv && curl -s localhost:8080
 ```
 Hello from distroless Java
 ```
+
+> [!TIP]
+> **On your desktop:** double-click **Java app** — or open **Firefox** at `http://localhost:8080`.
+> `Hello from distroless Java`, served by the container you just started (it's still running:
+> `docker ps`). No shell, no root, and a real HTTP endpoint.
 
 ```bash
 grype javapp:adv
@@ -229,6 +262,13 @@ cosign verify \
   --certificate-identity=https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main \
   localhost:5000/nginx:latest | jq
 ```
+
+> [!TIP]
+> **On your desktop:** double-click **Registry catalog** — or open **Firefox** at
+> `http://localhost:5000/v2/_catalog`. The JSON viewer shows `{"repositories": ["nginx"]}` —
+> your high-side registry now holds the image. Then `http://localhost:5000/v2/nginx/tags/list`:
+> next to `latest` there is a `sha256-….sig` tag — that *is* the signature `cosign copy` carried
+> across. A plain copy would have left that tag behind.
 
 Trust survived the transfer. The same pattern feeds Harbor or Artifactory syncs from unclass to
 high side. (Fully-offline verification with bundled transparency-log proofs exists as the
