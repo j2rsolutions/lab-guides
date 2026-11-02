@@ -14,6 +14,15 @@ behind during the live session.
 > **your** numbers are the ones Xray shows in your project. The gap is the point, not the
 > digits.
 
+> [!TIP]
+> **How to read this guide.** Anything you have to *do* is marked — the rest is context.
+>
+> | Marker | Means |
+> |---|---|
+> | ▶ **DO:** | click, type or run something — a command block always follows a DO line |
+> | ✅ **CHECK:** | what you should see before you move on |
+> | ✍️ **RECORD:** | write it on your scorecard |
+
 ## The idea
 
 Your scanner isn't the problem. Your *baseline* is. Point Xray at an app built on open source
@@ -43,13 +52,16 @@ does the patching argument for them.
 > (the registry UI). You will need both, repeatedly. When a login fails, the first question
 > is always: *which system am I talking to, and which password did I just use?*
 
-1. Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
-2. Log in with the credentials on your table card (`lab01`…`labNN`).
+1. ▶ **DO:** Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
+2. ▶ **DO:** Log in with the credentials on your table card (`lab01`…`labNN`).
 3. **Your folder today: JFrog lab.** Sign in once. The portal shows one **folder per lab track**
-   running today; your welcome email says which folder is which. For this guide open the folder
-   named **JFrog lab**. On a single-lab day there are no folders — the same two tiles sit at the
-   portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
-   folder you get **two tiles** — both are your own seat:
+   running today; your welcome email says which folder is which.
+
+   ▶ **DO:** For this guide open the folder named **JFrog lab**. On a single-lab day there are no
+   folders — the same two tiles sit at the portal root as **Your Lab Server (labNN)** and
+   **Your Lab Server desktop (labNN)**.
+
+   Inside your folder you get **two tiles** — both are your own seat:
    - **JFrog lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
    - **JFrog lab desktop (labNN)** — a **desktop** on the *same* server (Firefox, a File
      Manager and a Terminal launcher; it's already logged in, no password to type). Today it's
@@ -59,24 +71,28 @@ does the patching argument for them.
    **your desktop tile** means **JFrog lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
    on a single-lab day.
 
-   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
+   ▶ **DO:** **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
    middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
-   side by side. Firefox on the desktop reaches anything listening on your seat
+   side by side.
+
+   Firefox on the desktop reaches anything listening on your seat
    (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
    Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
    launcher isn't on your desktop, type it; same result.
 4. **Open the JFrog UI.** Your card — and the JFrog block of your welcome email — also carries
-   your **JFrog** URL, login and **project key** (= your seat name, e.g. `lab01`). Two places to
-   open it — pick one and stay there:
+   your **JFrog** URL, login and **project key** (= your seat name, e.g. `lab01`).
+
+   ▶ **DO:** Two places to open it — pick one and stay there:
    - **(a)** a second tab on your laptop, or
    - **(b)** **Firefox on your desktop tile** (**JFrog lab desktop (labNN)** — or **Your Lab Server
      desktop (labNN)** on a single-lab day) — double-click **JFrog Platform**, or type
      `https://<your JFrog host>` (it's `echo $JF_HOST` in the terminal).
 
    **Use (b) if your laptop's browser is locked down or can't reach the host** — the seat always
-   can. Same JFROG password either way. You are the **Project Admin** of that project: pick it
-   in the **project picker, top-left** of the JFrog UI, and its repos, Xray watches and policies
-   are all yours today.
+   can. Same JFROG password either way. You are the **Project Admin** of that project.
+
+   ▶ **DO:** Pick it in the **project picker, top-left** of the JFrog UI, and its repos, Xray
+   watches and policies are all yours today.
 
 > [!NOTE]
 > **New in this lab: one JFrog Project per seat.** Earlier runs of this lab put every seat in one
@@ -96,31 +112,31 @@ does the patching argument for them.
 > `lab12-block-high` never fight. Everywhere the guide says `$JF_DEV` or `$JF_PROJECT`, it means
 > *your* repo and *your* project.
 5. Clipboard: **Ctrl+Alt+Shift** opens the side menu → paste into its clipboard box.
-6. Your seat already knows where it lives — three variables are exported in every shell:
+6. Your seat already knows where it lives — three variables are exported in every shell.
+
+   ▶ **DO:** Print them:
 
    ```bash
    echo $JF_HOST $JF_PROJECT $JF_DEV
    ```
 
-   Something like `jfrog.<zone>  lab01  lab01-dev-docker`: the platform host, your project
-   key, and your project's dev repo (`$JF_PROJECT-dev-docker`). Every command below uses
-   them. `JF_HOST` and `JF_DEV` must not be empty — if they are, open a fresh terminal
-   before going on. `JF_PROJECT` may be empty on a **legacy (flat) seat** — your facilitator
-   will tell you; in that case there is no project picker for you, and you set the two
-   variables by hand once per terminal, with your seat name as the project:
+   Something like `<event>-jfrog.lab.aws.j2rsolutions.com  lab01  lab01-dev-docker`: the
+   platform host, your project key, and your project's dev repo (`$JF_PROJECT-dev-docker`).
+   Every command below uses them.
 
-   ```bash
-   export JF_DEV=${JF_DEV:-dev-docker} JF_PROJECT=${JF_PROJECT:-lab01}   # legacy seats only — use YOUR seat name
-   ```
+   ✅ **CHECK:** None of the three may be empty — if one is, open a fresh terminal and check
+   again.
 
 Your seat runs Docker and a k3s cluster with OctoShop's proxy and database already up —
-hardened images, naturally. Sanity check:
+hardened images, naturally.
+
+▶ **DO:** Run this sanity check:
 
 ```bash
 kubectl get pods -n octoshop && curl -s -o /dev/null -w '%{http_code}\n' localhost:30080
 ```
 
-Two pods (`proxy`, `db`) and a **502**. Not broken — honest: the web tier doesn't exist yet.
+✅ **CHECK:** Two pods (`proxy`, `db`) and a **502**. Not broken — honest: the web tier doesn't exist yet.
 **The shelf is empty until you ship something through the pipeline.** That's Lab 5.
 
 ---
@@ -128,8 +144,10 @@ Two pods (`proxy`, `db`) and a **502**. Not broken — honest: the web tier does
 ## Lab 1 — One front door (~10 min)
 
 Your project is already wired into the seat (`$JF_HOST`, `$JF_PROJECT` and `$JF_DEV` are set
-in your shell; Docker is logged in). Confirm the front door works by pulling a Chainguard image
-**through** the platform's `cgr` remote repo instead of straight from the internet:
+in your shell; Docker is logged in).
+
+▶ **DO:** Confirm the front door works by pulling a Chainguard image **through** the platform's
+`cgr` remote repo instead of straight from the internet:
 
 ```bash
 docker login $JF_HOST
@@ -139,10 +157,15 @@ docker images | grep $JF_HOST
 
 The `cgr` repo is a *remote* repo proxying `cgr.dev`: one URL for every Dockerfile in the
 org, cached at the edge, and — the part that matters — **everything that passes through it is
-visible to Xray**. In the JFrog UI — your laptop tab, or Firefox on your desktop tile (**JFrog lab
+visible to Xray**. (Docker may answer *Image is up to date*: your seat already pulled every base
+image through this same door when it was seeded, so the layers are here — the record in `cgr` is
+the point.)
+
+▶ **DO:** In the JFrog UI — your laptop tab, or Firefox on your desktop tile (**JFrog lab
 desktop (labNN)** — or **Your Lab Server desktop (labNN)** on a single-lab day):
-Artifactory → Artifacts → `cgr` — there's your pull,
-already indexed. (`cgr` is a shared, platform-wide repo — if it's missing from the tree, set the
+Artifactory → Artifacts → `cgr`.
+
+✅ **CHECK:** There's your pull, already indexed. (`cgr` is a shared, platform-wide repo — if it's missing from the tree, set the
 top-left project picker to *All*.)
 
 ---
@@ -150,7 +173,9 @@ top-left project picker to *All*.)
 ## Lab 2 — Measure the noise (~15 min)
 
 Same app, two supply chains. OctoShop's web source is in `~/octoshop/web` with both
-Dockerfiles from the CVE Zero lab. **Read them first** — the entire lab is in the diff:
+Dockerfiles from the CVE Zero lab.
+
+▶ **DO:** **Read them first** — the entire lab is in the diff:
 
 ```bash
 cd ~/octoshop/web
@@ -158,11 +183,17 @@ cat Dockerfile
 cat Dockerfile.cg
 ```
 
+First the `FROM` lines: both bases come **through your platform** — `$JF_HOST/dockerhub/library/python:3.12`
+and `$JF_HOST/cgr/chainguard/python:…` — the seat wrote your host into every Dockerfile at seed.
+Nothing in this lab pulls from the internet directly: one front door, for the build as well as the pull.
+
 Three differences to notice before you build: the base image (`python:3.12` hauls all of
 Debian; `cgr.dev/chainguard/python` is distroless), one stage vs two (the `.cg` build's
 toolbox never ships), and the `.cg` runtime deliberately uninstalls pip/setuptools — build
-tools do the building, then get out of the container. Now build and push both through your
-front door (builds are cached on your seat — seconds each):
+tools do the building, then get out of the container.
+
+▶ **DO:** Now build and push both through your front door (builds are cached on your seat —
+seconds each):
 
 ```bash
 docker build -t $JF_HOST/$JF_DEV/octoshop-web:v1 .
@@ -171,18 +202,23 @@ docker build -t $JF_HOST/$JF_DEV/octoshop-web:v2 -f Dockerfile.cg .
 docker push $JF_HOST/$JF_DEV/octoshop-web:v2
 ```
 
-Now the money shot. In the JFrog UI (laptop tab or desktop-tile Firefox), **with your project
+Now the money shot.
+
+▶ **DO:** In the JFrog UI (laptop tab or desktop-tile Firefox), **with your project
 selected in the top-left picker**:
 **Xray → Scans List** (or Artifactory → your `$JF_DEV` repo → select the artifact → Xray tab).
-Scans List is filtered by that picker — with no project selected you'll see nothing. Give
-indexing a minute, then put v1 and v2 side by side:
 
-- `octoshop-web:v1` (FROM `python:3.12`): **~620 findings** (illustrative)
+Scans List is filtered by that picker — with no project selected you'll see nothing.
+
+✅ **CHECK:** Give indexing a minute, then put v1 and v2 side by side:
+
+- `octoshop-web:v1` (FROM `dockerhub/library/python:3.12`): **~620 findings** (illustrative)
 - `octoshop-web:v2` (Chainguard, same `app.py`): **~1 finding**
 
 Ask the honest question: *which of these dashboards would your team actually work?* 620
-findings isn't security visibility — it's a queue nobody will ever drain. Write both numbers
-on the scorecard at the bottom.
+findings isn't security visibility — it's a queue nobody will ever drain.
+
+✍️ **RECORD:** Write both numbers on the scorecard at the bottom.
 
 ---
 
@@ -191,7 +227,9 @@ on the scorecard at the bottom.
 Starting at zero doesn't mean staying at zero — it means every finding from now on is **real
 and yours**. Prove it. A developer on your team is shipping a feature and pins Flask back to
 an ancient version, because — direct quote — *"that's the only one I've tested my code on."*
-Sound familiar? Play the developer:
+Sound familiar?
+
+▶ **DO:** Play the developer:
 
 ```bash
 sed -i 's/^flask.*/flask==2.0.1/' requirements.txt
@@ -199,17 +237,20 @@ cat requirements.txt
 ```
 
 There it is: one line, a three-year-old Flask, and a perfectly sincere reason. Nobody
-attacked anything — this is how vulnerabilities actually enter production. Build and ship
-it like any other change (the pin is cached on your seat, so the rebuild is instant and
-offline):
+attacked anything — this is how vulnerabilities actually enter production.
+
+▶ **DO:** Build and ship it like any other change (the pin is cached on your seat, so the
+rebuild is instant and offline):
 
 ```bash
 docker build -t $JF_HOST/$JF_DEV/octoshop-web:v3 -f Dockerfile.cg .
 docker push $JF_HOST/$JF_DEV/octoshop-web:v3
 ```
 
-Back to Xray: v3 shows **one new finding** — the known Flask CVE you just introduced
-(illustratively CVE-2023-30861, High). On the v1 dashboard this would have been invisible:
+✅ **CHECK:** Back to Xray: v3 shows **one new finding** — the known Flask CVE you just
+introduced (illustratively CVE-2023-30861, High).
+
+On the v1 dashboard this would have been invisible:
 finding number 621, buried on page 13. On a quiet baseline it's the *only* thing on screen —
 attributable to a specific change, by a specific person, today. That's the difference between
 noise and signal, and it's the entire case for pairing a clean start (Chainguard) with
@@ -219,8 +260,9 @@ continuous watching (Xray).
 
 v3 was a vulnerability you *chose* — a bad pin in code you own. Images also rot a second
 way: **build tooling that ships without anyone choosing it**. Your Dockerfile guards
-against this with one line; see what happens without it. Restore the good Flask first,
-then temporarily remove the guard:
+against this with one line; see what happens without it.
+
+▶ **DO:** Restore the good Flask first, then temporarily remove the guard:
 
 ```bash
 sed -i 's/^flask.*/flask>=3.0/' requirements.txt
@@ -229,14 +271,18 @@ docker build -t $JF_HOST/$JF_DEV/octoshop-web:v5 -f Dockerfile.cg .
 docker push $JF_HOST/$JF_DEV/octoshop-web:v5
 ```
 
-In Xray: v5 carries **~4 High findings your app never asked for** — open one and read the
-impact path: every one threads through `site-packages/pip/`. `python -m venv` seeds pip and
+✅ **CHECK:** In Xray: v5 carries **~4 High findings your app never asked for**.
+
+▶ **DO:** Open one and read the impact path: every one threads through `site-packages/pip/`.
+
+`python -m venv` seeds pip and
 setuptools into the venv; pip vendors its own private copies of setuptools and msgpack and
 ships an SBOM confessing to it; the scanner reads the confession. Clean requirements, dirty
 image — **the vulnerability came from the packaging default, not the code.**
 
-Now remediate — not by patching, by *subtraction*. Put the guard back (this is the exact
-line your Dockerfile normally carries):
+Now remediate — not by patching, by *subtraction*.
+
+▶ **DO:** Put the guard back (this is the exact line your Dockerfile normally carries):
 
 ```bash
 sed -i 's|RUN /home/nonroot/venv/bin/pip install -r requirements.txt|RUN /home/nonroot/venv/bin/pip install -r requirements.txt \&\& \\\n    /home/nonroot/venv/bin/pip uninstall -y pip setuptools|' Dockerfile.cg
@@ -244,8 +290,10 @@ docker build -t $JF_HOST/$JF_DEV/octoshop-web:v5-fixed -f Dockerfile.cg .
 docker push $JF_HOST/$JF_DEV/octoshop-web:v5-fixed
 ```
 
-v5 and v5-fixed side by side in Scans List: findings to zero, and the diff is a line that
-*removes* software. Nobody waited for upstream patches — the components that carried the
+✅ **CHECK:** v5 and v5-fixed side by side in Scans List: findings to zero, and the diff is a
+line that *removes* software.
+
+Nobody waited for upstream patches — the components that carried the
 CVEs simply aren't aboard anymore. **The fastest patch is the component you don't ship** —
 the distroless argument, executed by your own hands, one layer up the stack. Between v3 and
 v5 you've now seen both ways images rot: the dependency you chose badly, and the freight
@@ -255,38 +303,32 @@ you never chose at all.
 
 ## Lab 4 — Give it teeth (~20 min)
 
-> [!NOTE]
-> **Verified live (2026-08-20, self-hosted E+):** the block fires on the **pull** (HTTP 403
-> from Xray), never on `docker-promote` — promotion is a server-side copy and flows
-> untouched. Gating promotion itself is a Release Bundles / RLM capability (v1.1 candidate).
-
 A dashboard informs; a **policy** enforces. Your project came with both pieces already built
-**inside its walls** — today you inspect them, arm them, and watch them bite. In the JFrog UI,
-**select your project in the top-left project picker** (`$JF_PROJECT`), then:
+**inside its walls** — today you inspect them, arm them, and watch them bite.
 
-1. **Xray → Watches & Policies → Policies**: open `$JF_PROJECT-block-high` (`lab01-block-high`
-   for seat 01 — every project's objects carry its key). Type Security, one rule:
+▶ **DO:** In the JFrog UI, **select your project in the top-left project picker**
+(`$JF_PROJECT`), then:
+
+1. ▶ **DO:** **Xray → Watches & Policies → Policies**: open `$JF_PROJECT-block-high`
+   (`lab01-block-high` for seat 01 — every project's objects carry its key).
+
+   ✅ **CHECK:** Type Security, one rule:
    minimal severity **High** → action **Block Download**. Read it — this is the whole gate,
    and it is *yours*: a Project Admin can loosen it, tighten it, or add a second rule.
-2. **Watches**: open `$JF_PROJECT-block-high-watch`. Resource: your `$JF_DEV` repo
-   (`lab01-dev-docker` for seat 01); assigned policy: `$JF_PROJECT-block-high`. That is the
+2. ▶ **DO:** **Watches**: open `$JF_PROJECT-block-high-watch`.
+
+   ✅ **CHECK:** Resource: your `$JF_DEV` repo (`lab01-dev-docker` for seat 01); assigned
+   policy: `$JF_PROJECT-block-high`.
+
+   That is the
    governed door for everything you push. The shared `prod-docker` sits *outside* your
    project and is governed a different way — the cluster's read-only pull credential, which
    is Lab 5's story.
 
-> [!NOTE]
-> **Legacy (flat) seat?** Your picker has no projects and nothing is pre-seeded. Build the two
-> pieces yourself as *global* objects — policy `block-high` (Security, min severity High →
-> Block Download) and watch `block-high-watch` on repository `dev-docker` with that policy —
-> then carry on from step 3 with those names.
-
 > [!WARNING]
 > **The UI creates watches and policies in whatever project context is selected** — silently.
 > With the picker on *All* (or on the wrong project) a "new watch" lands somewhere your repo
-> can't see, never fires, and the 403 below never comes. The facilitator lost an hour to this
-> exact trap. Before you touch anything under Xray, look at the top-left picker: it must say
-> `$JF_PROJECT`. If you don't see `$JF_PROJECT-block-high-watch` at all, that's the tell — fix
-> the picker, don't create a second one.
+> can't see, never fires, and the 403 below never comes.
 
 > [!NOTE]
 > **Why the clean image survives a High-severity gate:** its Dockerfile uninstalls
@@ -297,32 +339,63 @@ A dashboard informs; a **policy** enforces. Your project came with both pieces a
 > is a scoped, **expiring Ignore Rule** with written justification — the POA&M workflow,
 > not a weakened gate.)
 
-3. **Apply it to what's already there**: watches judge scan events, and the CVE feed keeps
-   moving after a scan lands — so make the policy pass judgement on everything already in
-   your repo. In the watch list (project `$JF_PROJECT`): row menu (⋮) on
+3. **Apply it to what's already there.** Watches judge scan events, and the CVE feed keeps
+   moving after a scan lands — so the policy has to pass judgement on everything already in
+   your repo.
+
+   ▶ **DO:** In the watch list (project `$JF_PROJECT`), open the row menu (⋮) on
    `$JF_PROJECT-block-high-watch` → **Apply on Existing Content** → pick a range covering
-   today → run. (Menu greyed out? Your project was created without the *Manage Security
-   Assets* privilege — wave the facilitator over; they run this one step for you and the
-   gate below still fires.) This back-fills violations for everything already in `$JF_DEV` —
-   and enforcement trails it by a few minutes, so **verify the gate is armed before the demo**:
+   today → **Run**.
+
+   > Menu greyed out? Your project was created without the *Manage Security Assets* privilege —
+   > wave the facilitator over; they run this one step for you and the gate below still fires.
+
+   This back-fills violations for everything already in `$JF_DEV`, and enforcement trails it
+   by a few minutes.
+
+   ▶ **DO:** Check the gate is armed — run this, and repeat it every 30 s:
 
    ```bash
    curl -s -o /dev/null -w '%{http_code}\n' -u <you>:<your-jfrog-password> https://$JF_HOST/v2/$JF_DEV/octoshop-web/manifests/v3
    ```
 
-   Repeat until it prints **403** (a 200 means the back-fill is still running — a pull now
-   would slip through the closing door and quietly succeed).
+   ✅ **CHECK:** it prints **403**. A 200 means the back-fill is still running — a pull now
+   would slip through the closing door and quietly succeed. Artifactory also asks Xray "is this
+   blocked?" on the **first** request for an artifact and **caches the answer for several
+   minutes**, so an early 200 keeps coming back for a while even after the violations exist.
+   Give it five minutes before you conclude the gate is broken.
 
 Now promote the clean build to production (the CLI is pre-configured as `lab`). `prod-docker`
 is shared by the whole room and you can deploy into it but not overwrite — so every seat
-promotes to **its own tags**, suffixed with your project key:
+promotes to **its own tags**, suffixed with your project key.
+
+▶ **DO:** Promote v2 and pull it back from production:
 
 ```bash
 jf rt docker-promote octoshop-web $JF_DEV prod-docker --copy --source-tag v2 --target-tag v2-$JF_PROJECT
 docker pull $JF_HOST/prod-docker/octoshop-web:v2-$JF_PROJECT
 ```
 
-The clean build flows. Now try the poisoned one:
+✅ **CHECK:** The clean build flows.
+
+> [!NOTE]
+> **FYI — why this step wipes Docker before the pull.** You *built* v3 on this machine, so your
+> Docker daemon already holds everything it needs to rebuild the image locally:
+>
+> - **The layers and the config are already cached here.** Plain `docker rmi` removes the tag,
+>   but the daemon keeps its digest bookkeeping and the content-addressed blobs.
+> - **Those blobs aren't blocked.** They are shared with clean images, so the policy can't refuse
+>   them. The metadata checks a pull makes are always allowed too.
+> - **The one request the policy refuses is the manifest download.** A daemon that already has the
+>   goods can skip it, so your pull would "succeed" and the gate would look broken.
+>
+> Wiping containers, images and the build cache turns your laptop-equivalent into an honest
+> consumer — the same position every other machine is in, including the k8s cluster in Lab 5. The
+> gate governs **distribution**, not possession; stopping a machine that already has the image is
+> the admission controller's job, one layer down. Your Docker work is done by this point, and
+> anything you rebuild later re-pulls through your `cgr` remote.
+
+▶ **DO:** Now try the poisoned one:
 
 ```bash
 jf rt docker-promote octoshop-web $JF_DEV prod-docker --copy --source-tag v3 --target-tag v3-$JF_PROJECT
@@ -331,7 +404,7 @@ docker system prune -af
 docker pull $JF_HOST/$JF_DEV/octoshop-web:v3
 ```
 
-Read the refusal out loud — docker relays Xray naming the policy, the repo, and the artifact
+✅ **CHECK:** Read the refusal out loud — docker relays Xray naming the policy, the repo, and the artifact
 (the repo is *your* project's, e.g. `lab01-dev-docker`):
 
 ```
@@ -339,23 +412,12 @@ Error response from daemon: ... "DENIED" ... octoshop-web/v3/manifest.json was n
 downloaded due to the download blocking policy configured in Xray for lab01-dev-docker.
 ```
 
-> [!NOTE]
-> **Why the wipe first?** You BUILT v3 on this machine. A builder's own daemon holds the
-> layers, the config, and digest bookkeeping (which survives plain `rmi`), so it can
-> re-materialize the image from metadata checks (always allowed) plus content-addressed
-> blobs (shared with clean images, unblockable by design) — without ever issuing the one
-> request the policy refuses: the manifest download. The gate governs **distribution**,
-> not possession. Wiping makes your daemon an honest consumer again — the same position
-> every other machine is in, including the k8s cluster in Lab 5. (Your docker work is done
-> by this point; anything you rebuild later re-pulls through your `cgr` remote.) Defense
-> in depth exists precisely because no single gate covers the machine that already has
-> the goods — that's the admission-controller's job, one layer down.
-
 > [!TIP]
 > 🧹 Cache acting suspicious at any point (pulls "succeeding" that shouldn't, stale tags)?
-> `/opt/lab/docker-clean.sh` resets your docker to an honest consumer in one command.
+>
+> ▶ **DO (optional):** `/opt/lab/docker-clean.sh` resets your docker to an honest consumer in one command.
 
-**Expect the Xray 403** — the platform refuses to serve an artifact that violates the policy
+✅ **CHECK:** **Expect the Xray 403** — the platform refuses to serve an artifact that violates the policy
 you just armed — a policy that lives in *your* project, that you own. No memo, no training: the
 unsafe path simply stops working. (Sound familiar?
 It's the admission-controller moment from the advanced lab, one layer earlier in the pipeline.)
@@ -367,7 +429,13 @@ It's the admission-controller moment from the advanced lab, one layer earlier in
 *This lab works even if you skipped 2–4: a known-good build is already in the shared
 `prod-docker`, pushed at seed time.*
 
-Your cluster's pull secret can read **`prod-docker` and nothing else**. Ship the web tier:
+> [!NOTE]
+> `prod-docker` also holds the database, proxy and cluster system images. They came through the
+> same governed door, so expect a busier repo view.
+
+Your cluster's pull secret can read **`prod-docker` and nothing else**.
+
+▶ **DO:** Ship the web tier:
 
 ```bash
 kubectl apply -f ~/octoshop/k8s/
@@ -375,28 +443,37 @@ kubectl rollout status deploy/web -n octoshop
 curl -s localhost:30080
 ```
 
+✅ **CHECK:** The last command prints:
+
 ```
 OctoShop up · 3 items in catalog · served via proxy→web→db
 ```
 
 > [!TIP]
-> **On your desktop** (**JFrog lab desktop (labNN)** — or **Your Lab Server desktop (labNN)** on a
+> ▶ **DO:** **On your desktop** (**JFrog lab desktop (labNN)** — or **Your Lab Server desktop (labNN)** on a
 > single-lab day): double-click **OctoShop** — or open **Firefox** at `http://localhost:30080`.
-> The 502 is gone in a real browser too. Keep the tab: after the `ErrImagePull` swap below,
+>
+> ✅ **CHECK:** The 502 is gone in a real browser too.
+>
+> Keep the tab: after the `ErrImagePull` swap below,
 > refresh it — **it still serves**, because Kubernetes never took the working pod down for an
 > image it couldn't pull.
 
-The 502 is gone — the app is serving, and the image came from exactly one place: the repo
-your policy governs. Now try the ungoverned path:
+✅ **CHECK:** The 502 is gone — the app is serving, and the image came from exactly one place:
+the repo your policy governs.
+
+▶ **DO:** Now try the ungoverned path:
 
 ```bash
 kubectl set image deploy/web web=$JF_HOST/$JF_DEV/octoshop-web:v2 -n octoshop
 kubectl get pods -n octoshop
 ```
 
-`ErrImagePull` / `ImagePullBackOff` — same image bits, wrong door. The cluster's credentials
-open the prod repo only, so *nothing* reaches production runtime without passing your gate.
-Restore the governed ref:
+✅ **CHECK:** `ErrImagePull` / `ImagePullBackOff` — same image bits, wrong door. The cluster's
+credentials open the prod repo only, so *nothing* reaches production runtime without passing
+your gate.
+
+▶ **DO:** Restore the governed ref:
 
 ```bash
 kubectl set image deploy/web web=$JF_HOST/prod-docker/octoshop-web:v2 -n octoshop

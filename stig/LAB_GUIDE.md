@@ -15,6 +15,15 @@
 - [Lab 4 — The guardrail (~10 min)](#lab-4--the-guardrail-10-min)
 - [Lab 5 — The evidence package (~10 min)](#lab-5--the-evidence-package-10-min)
 
+> [!TIP]
+> **How to read this guide.** Anything you have to *do* is marked — the rest is context.
+>
+> | Marker | Means |
+> |---|---|
+> | ▶ **DO:** | click, type or run something — a command block always follows a DO line |
+> | ✅ **CHECK:** | what you should see before you move on |
+> | ✍️ **RECORD:** | write it on your scorecard |
+
 ## The situation
 
 Your team is up for an ATO. The assessor runs the DISA benchmark against your container images, and if
@@ -32,11 +41,14 @@ you actually reintroduce a controlled risk.
 
 ## Lab 0 — Get your seat
 
-1. Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
-2. Log in with your table-card username/password (`lab01`…`labNN`).
+1. ▶ **DO:** Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
+2. ▶ **DO:** Log in with your table-card username/password (`lab01`…`labNN`).
 3. **Your folder today: STIG lab.** Sign in once. The portal shows one **folder per lab track**
-   running today; your welcome email says which folder is which. For this guide open the folder
-   named **STIG lab**. On a single-lab day there are no folders — the same two tiles sit at the
+   running today; your welcome email says which folder is which.
+
+   ▶ **DO:** For this guide open the folder named **STIG lab**.
+
+   On a single-lab day there are no folders — the same two tiles sit at the
    portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
    folder you get **two tiles** — both are your own seat:
    - **STIG lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
@@ -49,9 +61,11 @@ you actually reintroduce a controlled risk.
    **your desktop tile** means **STIG lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
    on a single-lab day.
 
-   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
+   ▶ **DO:** **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
    middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
-   side by side. Firefox on the desktop reaches anything listening on your seat
+   side by side.
+
+   Firefox on the desktop reaches anything listening on your seat
    (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
    Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
    launcher isn't on your desktop, type it; same result.
@@ -60,6 +74,8 @@ you actually reintroduce a controlled risk.
 Everything is staged in `~/labs/stig`: a `scan.sh` wrapper around OpenSCAP, the app source
 (`app.py` + `Dockerfile.app`), the guardrail demo (`Dockerfile.broken`), and two images already built —
 `stig-demo:app` (your app on the hardened base) and `stig-demo:broken`.
+
+▶ **DO:** Go to the lab folder and list what's staged:
 
 ```bash
 cd ~/labs/stig && ls && docker images | grep -E 'stig-demo|python-fips|openscap'
@@ -85,19 +101,24 @@ Chainguard formally aligns its images to that SRG and publishes the scan content
 
 Your base is `python-fips` — a Chainguard image that is **STIG-hardened and FIPS** out of the box.
 
-First, don't take the wrapper on faith. `scan.sh` is three lines around a stock tool — read it:
+First, don't take the wrapper on faith. `scan.sh` is three lines around a stock tool.
+
+▶ **DO:** Read it:
 
 ```bash
 cat scan.sh
 ```
 
 No magic: it runs upstream **`oscap-docker`** against the DISA GPOS datastream and counts the failures.
-The proof that it isn't rigged to print "0" is to run it on a stock image and watch it find things. So
-scan the everyday baseline first — Docker Hub's own `python`:
+The proof that it isn't rigged to print "0" is to run it on a stock image and watch it find things.
+
+▶ **DO:** Scan the everyday baseline first — Docker Hub's own `python`:
 
 ```bash
 ./scan.sh python:latest
 ```
+
+✅ **CHECK:** You should see:
 
 ```
   STIG rules FAILED: 6
@@ -105,11 +126,14 @@ scan the everyday baseline first — Docker Hub's own `python`:
 ```
 
 Six real findings, against 396 evaluated rules — the scanner works, and it isn't grading on a curve.
-Now the Chainguard base, the exact same command:
+
+▶ **DO:** Now scan the Chainguard base, the exact same command:
 
 ```bash
 ./scan.sh $(docker images --format '{{.Repository}}:{{.Tag}}' | grep python-fips | grep -v dev | head -1)
 ```
+
+✅ **CHECK:** You should see:
 
 ```
   STIG rules FAILED: 0   (the rest are documented Not Applicable — no login service, no local users)
@@ -120,13 +144,18 @@ quarter to reach, before you've done anything. A minimal image satisfies most GP
 construction*: no local user accounts, no configured passwords, no remote-access service; the rest carry
 no automated check and are documented N/A with rationale.
 
-> **Open both reports and see for yourself.** On your desktop (**STIG lab desktop (labNN)** — or
+> **Open both reports and see for yourself.**
+>
+> ▶ **DO:** On your desktop (**STIG lab desktop (labNN)** — or
 > **Your Lab Server desktop (labNN)** on a single-lab day), open the **STIG Reports** folder (or the
-> File Manager) and double-click each `report-*.html` — Firefox renders OpenSCAP's full CAT I/II/III
-> breakdown, rule by rule, pass and fail. The stock report shows you exactly which six rules tripped;
+> File Manager) and double-click each `report-*.html`.
+>
+> Firefox renders OpenSCAP's full CAT I/II/III breakdown, rule by rule, pass and fail.
+>
+> ✅ **CHECK:** The stock report shows you exactly which six rules tripped;
 > the python-fips report shows a clean sheet. That side-by-side IS the lab.
 
-Record both on the scorecard:
+✍️ **RECORD:** Record both on the scorecard:
 
 | Image | Size | STIG rules failed |
 |---|---|---|
@@ -145,29 +174,36 @@ second one.
 
 ## Lab 3 — Develop on it, stay compliant (~15 min)
 
-Now the real question: build an actual app on this base and see what it does to your compliance. Look at
-how the app image is built — the normal Chainguard dev→runtime pattern:
+Now the real question: build an actual app on this base and see what it does to your compliance.
+
+▶ **DO:** Look at how the app image is built — the normal Chainguard dev→runtime pattern:
 
 ```bash
 cat Dockerfile.app        # pip install flask + your code, on the hardened base
 ```
 
-It's already built as `stig-demo:app`. Confirm it's a real, working app:
+It's already built as `stig-demo:app`.
+
+▶ **DO:** Confirm it's a real, working app:
 
 ```bash
 docker run --rm -d --name myapp -p 8080:8080 stig-demo:app && sleep 2 && curl -s localhost:8080
 docker rm -f myapp
 ```
 
+✅ **CHECK:** It prints:
+
 ```
 compliant app, still serving
 ```
 
-Now re-scan the image **with your app and Flask installed**:
+▶ **DO:** Now re-scan the image **with your app and Flask installed**:
 
 ```bash
 ./scan.sh stig-demo:app
 ```
+
+✅ **CHECK:** You should see:
 
 ```
   STIG rules FAILED: 0
@@ -199,12 +235,16 @@ STIG). No base image can do those for you; this one just makes sure they're *all
 ## Lab 4 — The guardrail (~10 min)
 
 So what *does* break it? A real controlled risk. `stig-demo:broken` is the same base with one addition —
-a remote-access (SSH) service someone bolted on "for debugging." Scan it:
+a remote-access (SSH) service someone bolted on "for debugging."
+
+▶ **DO:** Scan it:
 
 ```bash
 cat Dockerfile.broken       # apk add dropbear
 ./scan.sh stig-demo:broken
 ```
+
+✅ **CHECK:** You should see:
 
 ```
   STIG rules FAILED: 46
@@ -221,14 +261,18 @@ before the assessor ever does.
 ## Lab 5 — The evidence package (~10 min)
 
 A compliant image nobody can *prove* is compliant doesn't move an ATO. You already have the artifacts
-from scanning `stig-demo:app`:
+from scanning `stig-demo:app`.
+
+▶ **DO:** List them:
 
 ```bash
 ls ~/Desktop/stig-reports/   # per-image: results-<image>.xml (machine-readable) + report-<image>.html (human-readable)
 ```
 
 Hand the ISSO: the scan report on **your actual app image** (near-zero, with N/A rationale), plus the
-image's provenance — because the STIG story and the supply-chain story are one story:
+image's provenance — because the STIG story and the supply-chain story are one story.
+
+▶ **DO:** Verify the image's provenance:
 
 ```bash
 # org-entitled images are signed by Chainguard's build infrastructure
@@ -238,10 +282,14 @@ cosign verify --certificate-oidc-issuer=https://issuer.enforce.dev \
   $(docker images --format '{{.Repository}}' | grep python-fips | head -1) >/dev/null && echo "signature verified"
 ```
 
+✅ **CHECK:** it prints `signature verified`.
+
 That's an ATO evidence package for a real, working application — not a promise, and not a stripped-down
 demo image you can't actually ship.
 
 ## Your compliance log
+
+✍️ **RECORD:** Fill in the STIG rules failed (and Works?) from your scans:
 
 | Stage | Image | STIG rules failed | Works? |
 |---|---|---|---|

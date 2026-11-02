@@ -10,6 +10,15 @@ Day one proved the images. Today proves the operating model: your libraries, you
 your cluster's admission policy, and your air gap. Each lab produces one **artifact** — collect
 them in the evidence sheet at the bottom; together they're the outline of a supply chain SOP.
 
+> [!TIP]
+> **How to read this guide.** Anything you have to *do* is marked — the rest is context.
+>
+> | Marker | Means |
+> |---|---|
+> | ▶ **DO:** | click, type or run something — a command block always follows a DO line |
+> | ✅ **CHECK:** | what you should see before you move on |
+> | ✍️ **RECORD:** | write it on your scorecard |
+
 ## Table of contents
 
 - [Lab 0 — Get your seat](#lab-0--get-your-seat)
@@ -23,11 +32,14 @@ them in the evidence sheet at the bottom; together they're the outline of a supp
 
 ## Lab 0 — Get your seat
 
-1. Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
-2. Log in with the username and password on your table card (`lab01`…`labNN`).
+1. ▶ **DO:** Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
+2. ▶ **DO:** Log in with the username and password on your table card (`lab01`…`labNN`).
 3. **Your folder today: Core lab.** Sign in once. The portal shows one **folder per lab track**
-   running today; your welcome email says which folder is which. For this guide open the folder
-   named **Core lab**. On a single-lab day there are no folders — the same two tiles sit at the
+   running today; your welcome email says which folder is which.
+
+   ▶ **DO:** For this guide open the folder named **Core lab**.
+
+   On a single-lab day there are no folders — the same two tiles sit at the
    portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
    folder you get **two tiles** — both are your own seat:
    - **Core lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
@@ -40,24 +52,29 @@ them in the evidence sheet at the bottom; together they're the outline of a supp
    **your desktop tile** means **Core lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
    on a single-lab day.
 
-   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
-   middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
-   side by side. Firefox on the desktop reaches anything listening on your seat
+   A tile normally opens in the same browser tab.
+
+   ▶ **DO:** **Keep both open.** **Ctrl-click** (or middle-click) a tile to open it in a
+   **new browser tab**, so the terminal and the desktop sit side by side.
+
+   Firefox on the desktop reaches anything listening on your seat
    (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
    Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
    launcher isn't on your desktop, type it; same result.
-4. Clipboard: press **Ctrl+Alt+Shift** to open the side menu, paste into its clipboard box,
+4. ▶ **DO:** Clipboard: press **Ctrl+Alt+Shift** to open the side menu, paste into its clipboard box,
    close the menu, then paste normally.
 
 Your seat runs Docker, a single-node Kubernetes cluster (kind) with the Sigstore
 policy-controller already installed, and a local "high-side" registry at `localhost:5000`. Lab
-files live in `~/labs`. Sanity check:
+files live in `~/labs`.
+
+▶ **DO:** Sanity check:
 
 ```bash
 kubectl get nodes && crane version
 ```
 
-A `Ready` node and a crane version string. (If the cluster is ever missing —
+✅ **CHECK:** A `Ready` node and a crane version string. (If the cluster is ever missing —
 `sudo /opt/lab/bootstrap.sh` rebuilds everything in about 90 seconds.)
 
 ---
@@ -67,31 +84,35 @@ A `Ready` node and a crane version string. (If the cluster is ever missing —
 pip, npm, and Maven pull from public repos where credential theft and malicious packages are
 now routine. Chainguard Libraries serves the same packages **rebuilt from source** in a hardened
 pipeline — and your tooling barely notices the switch. Your seat already has the auth wired
-(`~/.netrc`, `~/.npmrc`); *selecting the index* is the entire migration, and that's your job:
+(`~/.netrc`, `~/.npmrc`); *selecting the index* is the entire migration, and that's your job.
+
+▶ **DO:** Point pip at the Chainguard index and install a package:
 
 ```bash
 pip config set global.index-url https://libraries.cgr.dev/python/simple/
 pip install flask
 ```
 
-Watch the first line of output — that's the receipt:
+✅ **CHECK:** Watch the first line of output — that's the receipt:
 
 ```
 Looking in indexes: https://libraries.cgr.dev/python/simple/
 ```
 
-Same move for npm:
+▶ **DO:** Same move for npm:
 
 ```bash
 npm config set registry https://libraries.cgr.dev/javascript/
 npm install axios
 ```
 
-Prove the source of truth (this output is your evidence-sheet artifact):
+▶ **DO:** Prove the source of truth:
 
 ```bash
 pip config list && npm config get registry
 ```
+
+✍️ **RECORD:** this output is your evidence-sheet artifact.
 
 Every future install on this machine now resolves from source-rebuilt packages, not public
 mirrors — the poisoned-package class of attack never reaches your build. In CI, these same
@@ -103,12 +124,16 @@ mirror — same endpoint family, not labbed today.)
 ## Lab 2 — Build your own image, the Chainguard way (~20 min)
 
 Every image you pulled on day one was assembled by **apko** from signed Wolfi packages — no
-Dockerfile, no `RUN`, no build-time shell. Today you drive the same machinery:
+Dockerfile, no `RUN`, no build-time shell. Today you drive the same machinery.
+
+▶ **DO:** Open the image definition:
 
 ```bash
 cd ~/labs/apko
 cat hello.yaml
 ```
+
+✅ **CHECK:** you should see:
 
 ```yaml
 contents:
@@ -119,7 +144,9 @@ entrypoint:
   command: python3 /hello.py
 ```
 
-The YAML *is* the image — reviewable in a pull request like any other code. Assemble it (apko
+The YAML *is* the image — reviewable in a pull request like any other code.
+
+▶ **DO:** Assemble it (apko
 runs from its own container; the package cache was pre-warmed at image-build, so this is fast — a much older seat may re-fetch a little):
 
 ```bash
@@ -128,19 +155,25 @@ runs from its own container; the package cache was pre-warmed at image-build, so
 
 The build wrote two artifacts: `hello.tar` (the image) and `sbom-x86_64.spdx.json` — the SBOM
 was **generated during the build**, not reverse-engineered afterwards, because a declared image
-already knows its own inventory. Scan what you built:
+already knows its own inventory.
+
+▶ **DO:** Scan what you built:
 
 ```bash
 grype hello:adv
 ```
 
-Expect a clean (or near-clean) result on an image you assembled yourself.
+✅ **CHECK:** Expect a clean (or near-clean) result on an image you assembled yourself.
 
 > [!TIP]
 > **On your desktop** (**Core lab desktop (labNN)** — or **Your Lab Server desktop (labNN)** on a
-> single-lab day): double-click **apko SBOMs** (opens `~/labs/apko` in the File Manager) and
+> single-lab day):
+>
+> ▶ **DO:** Double-click **apko SBOMs** (opens `~/labs/apko` in the File Manager) and
 > open `sbom-x86_64.spdx.json` — or type `file:///home/labuser/labs/apko/sbom-x86_64.spdx.json`
-> into Firefox. The JSON viewer shows `packages`: expand it — every entry is one of the packages
+> into Firefox.
+>
+> ✅ **CHECK:** The JSON viewer shows `packages`: expand it — every entry is one of the packages
 > you declared in `hello.yaml` (plus their dependencies), with its version and license. Nothing
 > else is in there, because nothing else was declared.
 
@@ -148,7 +181,9 @@ Expect a clean (or near-clean) result on an image you assembled yourself.
 > **Why isn't `hello.py` inside the image?** apko has no `COPY` — contents come from declared,
 > signed packages, full stop. That constraint is the point: nothing enters the image that isn't
 > declared and inventoried. App files become packages (built with melange, apko's sibling) in
-> production; for a quick run today, mount it:
+> production.
+>
+> ▶ **DO (optional):** For a quick run today, mount it:
 > `docker run --rm -v "$PWD/hello.py":/hello.py hello:adv` →
 > `hello from an image with no Dockerfile`
 
@@ -157,12 +192,16 @@ Expect a clean (or near-clean) result on an image you assembled yourself.
 ## Lab 3 — Migrate the hard one: Java (~20 min)
 
 "That works for Python toys, but we run JVMs." This lab is the answer. Two stages: Chainguard's
-Maven `-dev` image compiles, the distroless JRE runs:
+Maven `-dev` image compiles, the distroless JRE runs.
+
+▶ **DO:** Open the Dockerfile:
 
 ```bash
 cd ~/labs/java
 cat Dockerfile
 ```
+
+✅ **CHECK:** you should see:
 
 ```dockerfile
 FROM cgr.dev/chainguard/maven:latest-dev AS build
@@ -177,7 +216,7 @@ EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app.jar"]
 ```
 
-Build and run it (Maven dependencies are pre-cached on your seat — the build finishes in
+▶ **DO:** Build and run it (Maven dependencies are pre-cached on your seat — the build finishes in
 seconds, offline):
 
 ```bash
@@ -185,14 +224,21 @@ docker build -t javapp:adv .
 docker run -d --rm -p 8080:8080 javapp:adv && curl -s localhost:8080
 ```
 
+✅ **CHECK:** it prints:
+
 ```
 Hello from distroless Java
 ```
 
 > [!TIP]
-> **On your desktop:** double-click **Java app** — or open **Firefox** at `http://localhost:8080`.
-> `Hello from distroless Java`, served by the container you just started (it's still running:
+> **On your desktop:**
+>
+> ▶ **DO:** Double-click **Java app** — or open **Firefox** at `http://localhost:8080`.
+>
+> ✅ **CHECK:** `Hello from distroless Java`, served by the container you just started (it's still running:
 > `docker ps`). No shell, no root, and a real HTTP endpoint.
+
+▶ **DO:** Scan it:
 
 ```bash
 grype javapp:adv
@@ -202,7 +248,9 @@ grype javapp:adv
 > 💡 If grype ever says `Pulled image` and then errors, you've typo'd a local tag — when a
 > name isn't found locally, grype goes looking on Docker Hub. Check `docker images`.
 
-A dramatically quieter scan than any stock JVM base — zero to a handful of findings depending on feed age — is your artifact. The toolbox (`maven:latest-dev`) never ships to
+A dramatically quieter scan than any stock JVM base — zero to a handful of findings depending on feed age — is your artifact.
+
+The toolbox (`maven:latest-dev`) never ships to
 production; the runtime is non-root with no shell — nothing for an implant to land on. The same
 two-stage shape covers Spring Boot, Quarkus, and your legacy WARs.
 
@@ -211,18 +259,22 @@ two-stage shape covers Spring Boot, Quarkus, and your legacy WARs.
 ## Lab 4 — Make the cluster refuse unsigned images (~25 min)
 
 The signature you verified by hand on day one becomes something the cluster checks on **every
-deploy**, with no human in the loop. Apply the policy, then opt the namespace in:
+deploy**, with no human in the loop.
+
+▶ **DO:** Apply the policy, then opt the namespace in:
 
 ```bash
 kubectl apply -f ~/labs/policy/signed-only.yaml
 kubectl label ns default policy.sigstore.dev/include=true
 ```
 
-Now deploy the image every tutorial on the internet uses:
+▶ **DO:** Now deploy the image every tutorial on the internet uses:
 
 ```bash
 kubectl run web --image=nginx:latest
 ```
+
+✅ **CHECK:** it is refused:
 
 ```
 error: admission webhook "policy.sigstore.dev" denied the request: … no matching signatures
@@ -230,15 +282,21 @@ error: admission webhook "policy.sigstore.dev" denied the request: … no matchi
 
 Read that out loud. Nobody was trained, nobody read a memo — the unsafe path simply stopped
 working. (The exact wording varies slightly across policy-controller versions; the rejection
-doesn't.) Now the signed build of the same software:
+doesn't.)
+
+▶ **DO:** Now deploy the signed build of the same software:
 
 ```bash
 kubectl run web --image=cgr.dev/chainguard/nginx:latest
 kubectl get pods
 ```
 
-`pod/web created`, `Running`. The deny event is itself evidence — enforcement you can show an
-assessor. Policies scope by namespace label and image glob, so break-glass namespaces are a
+✅ **CHECK:** `pod/web created`, `Running`.
+
+The deny event is itself evidence — enforcement you can show an
+assessor.
+
+Policies scope by namespace label and image glob, so break-glass namespaces are a
 design choice, not a workaround.
 
 ---
@@ -247,14 +305,16 @@ design choice, not a workaround.
 
 `localhost:5000` is your "high side" registry today. The tool choice is the lesson: signatures
 are separate artifacts in the registry, so a plain image copy **leaves the proof behind** —
-`cosign copy` moves the image *and* its signatures together:
+`cosign copy` moves the image *and* its signatures together.
+
+▶ **DO:** Copy the image and its signatures to the high side, then pull it:
 
 ```bash
 cosign copy cgr.dev/chainguard/nginx:latest localhost:5000/nginx:latest
 docker pull localhost:5000/nginx:latest
 ```
 
-Verify **on the far side** — same identity, new registry:
+▶ **DO:** Verify **on the far side** — same identity, new registry:
 
 ```bash
 cosign verify \
@@ -264,10 +324,17 @@ cosign verify \
 ```
 
 > [!TIP]
-> **On your desktop:** double-click **Registry catalog** — or open **Firefox** at
-> `http://localhost:5000/v2/_catalog`. The JSON viewer shows `{"repositories": ["nginx"]}` —
-> your high-side registry now holds the image. Then `http://localhost:5000/v2/nginx/tags/list`:
-> next to `latest` there is a `sha256-….sig` tag — that *is* the signature `cosign copy` carried
+> **On your desktop:**
+>
+> ▶ **DO:** Double-click **Registry catalog** — or open **Firefox** at
+> `http://localhost:5000/v2/_catalog`.
+>
+> ✅ **CHECK:** The JSON viewer shows `{"repositories": ["nginx"]}` —
+> your high-side registry now holds the image.
+>
+> ▶ **DO:** Then open `http://localhost:5000/v2/nginx/tags/list`.
+>
+> ✅ **CHECK:** next to `latest` there is a `sha256-….sig` tag — that *is* the signature `cosign copy` carried
 > across. A plain copy would have left that tag behind.
 
 Trust survived the transfer. The same pattern feeds Harbor or Artifactory syncs from unclass to
@@ -276,7 +343,9 @@ production pattern for truly disconnected enclaves; today's path verifies online
 
 ## Your evidence sheet
 
-One artifact per lab — a screenshot or pasted command output each. Five artifacts, one story:
+✍️ **RECORD:** One artifact per lab — a screenshot or pasted command output each.
+
+Five artifacts, one story:
 consumption → construction → enforcement → transfer.
 
 | Lab | Artifact you produced | What it proves | ✓ |

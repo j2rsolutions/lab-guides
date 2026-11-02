@@ -18,6 +18,15 @@
 - [Lab 5 — Your code on the FIPS image (~15 min)](#lab-5--your-code-on-the-fips-image-15-min)
 - [Lab 6 — The compliance evidence package (~10 min)](#lab-6--the-compliance-evidence-package-10-min)
 
+> [!TIP]
+> **How to read this guide.** Anything you have to *do* is marked — the rest is context.
+>
+> | Marker | Means |
+> |---|---|
+> | ▶ **DO:** | click, type or run something — a command block always follows a DO line |
+> | ✅ **CHECK:** | what you should see before you move on |
+> | ✍️ **RECORD:** | write it on your scorecard |
+
 ## The situation
 
 Your product just entered a regulated deal — federal, or a customer who inherits federal
@@ -35,11 +44,14 @@ swap rather than a research project.
 
 ## Lab 0 — Get your seat
 
-1. Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
-2. Log in with the username and password on your table card (`lab01`…`labNN`).
+1. ▶ **DO:** Open the portal — **the URL is in your welcome email** (and on your table card at in-person events).
+2. ▶ **DO:** Log in with the username and password on your table card (`lab01`…`labNN`).
 3. **Your folder today: FIPS lab.** Sign in once. The portal shows one **folder per lab track**
-   running today; your welcome email says which folder is which. For this guide open the folder
-   named **FIPS lab**. On a single-lab day there are no folders — the same two tiles sit at the
+   running today; your welcome email says which folder is which.
+
+   ▶ **DO:** For this guide open the folder named **FIPS lab**.
+
+   On a single-lab day there are no folders — the same two tiles sit at the
    portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
    folder you get **two tiles** — both are your own seat:
    - **FIPS lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
@@ -52,15 +64,19 @@ swap rather than a research project.
    **your desktop tile** means **FIPS lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
    on a single-lab day.
 
-   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
+   ▶ **DO:** **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
    middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
-   side by side. Firefox on the desktop reaches anything listening on your seat
+   side by side.
+
+   Firefox on the desktop reaches anything listening on your seat
    (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
    Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
    launcher isn't on your desktop, type it; same result.
 4. Clipboard: press **Ctrl+Alt+Shift** to open the side menu, paste into its clipboard box, then paste normally.
 
-Two images are pre-cached on your seat and two tiny scripts drive the whole lab:
+Two images are pre-cached on your seat and two tiny scripts drive the whole lab.
+
+▶ **DO:** Go to the lab folder and list what's staged:
 
 ```bash
 cd ~/labs/fips && ls
@@ -104,9 +120,13 @@ The auditor asks for the second one. Everything below is about making that state
 Look at what's providing crypto in the stock image: is a validated module running in FIPS mode, and
 what does it do with a non-approved algorithm (MD5) — as a checksum, and *as security* (an HMAC tag)?
 
+▶ **DO:** Run the posture check on the stock image:
+
 ```bash
 ./posture.sh fips-demo:stock
 ```
+
+✅ **CHECK:** You should see:
 
 ```
 OpenSSL:     OpenSSL 3.x.x ...
@@ -121,17 +141,19 @@ validated module in FIPS mode would have refused that. This image is running the
 provider, not the validated module in its approved mode (`get_fips_mode=0` says so outright). That is
 exactly the gap the questionnaire is probing.
 
-Write down: **stock = not FIPS.** The app still serves — "works" was never the question.
+✍️ **RECORD:** Write down: **stock = not FIPS.** The app still serves — "works" was never the question.
 
 ---
 
 ## Lab 3 — Swap the image, inherit FIPS mode (~10 min)
 
-Same check against the Chainguard FIPS image:
+▶ **DO:** Same check against the Chainguard FIPS image:
 
 ```bash
 ./posture.sh fips-demo:fips
 ```
+
+✅ **CHECK:** You should see:
 
 ```
 OpenSSL:     OpenSSL 3.x.x ...
@@ -157,21 +179,25 @@ Note what you did to get here: **nothing.** No code change, no `openssl.cnf`, no
 image ships with the validated module loaded and FIPS mode *on by default*. In your own service the
 change is one line: the `FROM`.
 
-**Log it: FIPS provider active on `fips-demo:fips`.**
+✍️ **RECORD:** **Log it: FIPS provider active on `fips-demo:fips`.**
 
 ---
 
 ## Lab 4 — Watch a non-approved algorithm get refused (~10 min)
 
 FIPS mode isn't just "strong crypto available" — it's "non-approved crypto *refused*." That refusal
-is the teaching moment, so run it on its own, on both images, and read the difference. The script
+is the teaching moment. The script
 refuses two ways: MD5 **as security** (an HMAC tag — refused as shipped), and MD5 **at all** with the
-legacy-allowed provider switched off (`CHAINGUARD_LEGACY_ALLOWED=0`, the strict posture):
+legacy-allowed provider switched off (`CHAINGUARD_LEGACY_ALLOWED=0`, the strict posture).
+
+▶ **DO:** Run it on its own, on both images, and read the difference:
 
 ```bash
 ./refuse-weak.sh fips-demo:stock
 ./refuse-weak.sh fips-demo:fips
 ```
+
+✅ **CHECK:** Stock first, then FIPS:
 
 ```
   HMAC-MD5 computed — MD5 accepted as security: NOT FIPS mode
@@ -182,11 +208,13 @@ legacy-allowed provider switched off (`CHAINGUARD_LEGACY_ALLOWED=0`, the strict 
   MD5 digest, strict mode: REFUSED — only the validated module is loaded
 ```
 
-See the refusal for yourself, from Python, the way your code would:
+▶ **DO:** See the refusal for yourself, from Python, the way your code would:
 
 ```bash
 docker run --rm -e CHAINGUARD_LEGACY_ALLOWED=0 --entrypoint python fips-demo:fips -c 'import hashlib; hashlib.md5(b"x")'
 ```
+
+✅ **CHECK:** You should see:
 
 ```
 Traceback (most recent call last):
@@ -194,7 +222,7 @@ Traceback (most recent call last):
 _hashlib.UnsupportedDigestmodError: [digital envelope routines] unsupported
 ```
 
-(Drop the `-e` and ask for an HMAC instead — `hmac.new(b"k", b"x", hashlib.md5)` — and you get the
+▶ **DO (optional):** (Drop the `-e` and ask for an HMAC instead — `hmac.new(b"k", b"x", hashlib.md5)` — and you get the
 same refusal as a `ValueError`, with no switch at all.)
 
 That's the difference between *hoping* nobody used MD5 for security and *proving* nobody **could**. A
@@ -213,7 +241,9 @@ validated module in FIPS mode actively closes the weak path; the only path left 
 
 ## Lab 5 — Your code on the FIPS image (~15 min)
 
-The point of Lab 3 was "it's a `FROM` line." Prove it with real code. Write a small service that does
+The point of Lab 3 was "it's a `FROM` line." Prove it with real code.
+
+▶ **DO:** Write a small service that does
 the crypto your product actually does — hash a token, verify an HMAC — and run it on both images:
 
 ```bash
@@ -242,6 +272,8 @@ echo "----"
 docker run --rm -v ~/labs/fips/svc.py:/svc.py --entrypoint python fips-demo:fips  /svc.py
 ```
 
+✅ **CHECK:** You should see:
+
 ```
 OpenSSL: OpenSSL 3.x.x ... | FIPS mode: off
 token  : ea3fd43be1e57d62 ...   (SHA-256)
@@ -262,7 +294,7 @@ Same code, same Python, same output for everything approved *and* for the checks
 that differs: the FIPS image refuses MD5 the moment it is used as security. **Your application didn't
 change; its cryptographic posture did.**
 
-Now ship it the way you'd ship for real — a Dockerfile whose base is the FIPS image:
+▶ **DO:** Now ship it the way you'd ship for real — a Dockerfile whose base is the FIPS image:
 
 ```bash
 cat > ~/labs/fips/Dockerfile <<'EOF'
@@ -273,7 +305,9 @@ EOF
 docker build -q -t svc:fips ~/labs/fips && docker run --rm svc:fips
 ```
 
-> **Facilitator beat — shipping strict.** Add one line under `FROM` — `ENV CHAINGUARD_LEGACY_ALLOWED=0`
+> **Facilitator beat — shipping strict.**
+>
+> ▶ **DO (optional):** Add one line under `FROM` — `ENV CHAINGUARD_LEGACY_ALLOWED=0`
 > — rebuild, and the `md5sum` line flips to `REFUSED -> strict mode`. That is the posture for an
 > auditor who wants no MD5 anywhere: the image itself finds every checksum that still uses it.
 
@@ -289,7 +323,7 @@ of whatever runtime you ship: `nginx-fips`, `node-fips`, `jdk-fips`, …). Same 
 
 ## Lab 6 — The compliance evidence package (~10 min)
 
-Turn the states you proved into artifacts the security team can file:
+▶ **DO:** Turn the states you proved into artifacts the security team can file:
 
 ```bash
 mkdir -p ~/fips-evidence && cd ~/fips-evidence
@@ -307,8 +341,10 @@ syft "$FIPS_IMG" -o spdx-json > sbom.spdx.json
 ls -l
 ```
 
+✅ **CHECK:** it prints `signature verified`, and `ls -l` lists the files you just wrote.
+
 > [!TIP]
-> **On your desktop (optional)** (**FIPS lab desktop (labNN)** — or **Your Lab Server desktop
+> ▶ **DO (optional):** **On your desktop** (**FIPS lab desktop (labNN)** — or **Your Lab Server desktop
 > (labNN)** on a single-lab day): **File Manager** → `fips-evidence` (the **FIPS lab** launcher
 > opens `~/labs/fips`; `~/fips-evidence` is the folder you just created next to it). Double-click
 > `posture.txt` and `refusal.txt` to read the two proofs; `sbom.spdx.json` opens in Firefox's JSON viewer
@@ -322,6 +358,8 @@ FIPS images; cite it in the package).
 ---
 
 ## Your evidence log
+
+✍️ **RECORD:** Fill in each check for both images as you go:
 
 | Check | `fips-demo:stock` | `fips-demo:fips` |
 |---|---|---|

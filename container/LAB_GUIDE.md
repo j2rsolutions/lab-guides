@@ -10,6 +10,15 @@ nothing to install locally. Work top to bottom; each lab stands alone if you fal
 > on the scorecard at the bottom as you go. Nothing here asks you to trust a vendor claim; you
 > prove each point yourself.
 
+> [!TIP]
+> **How to read this guide.** Anything you have to *do* is marked — the rest is context.
+>
+> | Marker | Means |
+> |---|---|
+> | ▶ **DO:** | click, type or run something — a command block always follows a DO line |
+> | ✅ **CHECK:** | what you should see before you move on |
+> | ✍️ **RECORD:** | write it on your scorecard |
+
 ## Table of contents
 
 - [Lab 0 — Get your seat](#lab-0--get-your-seat)
@@ -23,13 +32,16 @@ nothing to install locally. Work top to bottom; each lab stands alone if you fal
 
 ## Lab 0 — Get your seat
 
-1. Open the portal (the URL on your table card, e.g. the portal URL from your welcome email).
-2. Log in with the username/password on your card (`lab01`…`labNN`).
+1. ▶ **DO:** Open the portal (the URL on your table card, e.g. the portal URL from your welcome email).
+2. ▶ **DO:** Log in with the username/password on your card (`lab01`…`labNN`).
 3. **Your folder today: Core lab.** Sign in once. The portal shows one **folder per lab track**
-   running today; your welcome email says which folder is which. For this guide open the folder
-   named **Core lab**. On a single-lab day there are no folders — the same two tiles sit at the
-   portal root as **Your Lab Server (labNN)** and **Your Lab Server desktop (labNN)**. Inside your
-   folder you get **two tiles** — both are your own seat:
+   running today; your welcome email says which folder is which.
+
+   ▶ **DO:** For this guide open the folder named **Core lab**. On a single-lab day there are no
+   folders — the same two tiles sit at the portal root as **Your Lab Server (labNN)** and
+   **Your Lab Server desktop (labNN)**.
+
+   Inside your folder you get **two tiles** — both are your own seat:
    - **Core lab (labNN)** — a **terminal** in the browser tab. The lab happens here.
    - **Core lab desktop (labNN)** — a **desktop** on the *same* server (Firefox, a File
      Manager and a Terminal launcher; it's already logged in, no password to type). Today it's
@@ -40,9 +52,11 @@ nothing to install locally. Work top to bottom; each lab stands alone if you fal
    **your desktop tile** means **Core lab desktop (labNN)** — or **Your Lab Server desktop (labNN)**
    on a single-lab day.
 
-   **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
+   ▶ **DO:** **Keep both open.** A tile normally opens in the same browser tab — **Ctrl-click** (or
    middle-click) a tile to open it in a **new browser tab**, so the terminal and the desktop sit
-   side by side. Firefox on the desktop reaches anything listening on your seat
+   side by side.
+
+   Firefox on the desktop reaches anything listening on your seat
    (`http://localhost:<port>`), and the File Manager reaches every file in your home folder.
    Every desktop step below names a launcher *and* the URL or path to type into Firefox — if the
    launcher isn't on your desktop, type it; same result.
@@ -50,7 +64,7 @@ nothing to install locally. Work top to bottom; each lab stands alone if you fal
    box, close the menu, then paste into the terminal. (Paste one command at a time — a multi-line
    paste can merge lines.)
 
-Sanity check:
+▶ **DO:** Run this sanity check:
 
 ```bash
 docker version && grype version
@@ -61,7 +75,8 @@ docker version && grype version
 ## Lab 1 — Pull both, weigh both (~15 min)
 
 Same software, two supply chains — both already staged on your seat at image-build time.
-Weigh them:
+
+▶ **DO:** Weigh them:
 
 ```bash
 docker images | grep -E 'nginx|python|REPOSITORY'
@@ -77,36 +92,48 @@ crane manifest cgr.dev/chainguard/nginx:latest | jq -r '.manifests[].platform.ar
 > ARE the lab.
 
 
-**Record** the two nginx sizes on the scorecard — then the python pair right below them
-(`python` vs `cgr.dev/chainguard/python`; the gap is even wider). Smaller means faster
+✍️ **RECORD:** the two nginx sizes on the scorecard — then the python pair right below them
+(`python` vs `cgr.dev/chainguard/python`; the gap is even wider).
+
+Smaller means faster
 pulls/cold starts, less registry and network cost, a smaller scan surface, and fewer files
 for an attacker to use.
 
 > [!TIP]
-> **Optional, on your desktop:** the two nginx builds can serve side by side. In the terminal:
+> **Optional, on your desktop:** the two nginx builds can serve side by side.
+>
+> ▶ **DO (optional):** In the terminal:
 >
 > ```bash
 > docker run -d --rm --name oss -p 8081:80   nginx:latest
 > docker run -d --rm --name cg  -p 8080:8080 cgr.dev/chainguard/nginx:latest
 > ```
 >
-> Then open **Firefox** on your desktop tile (**Core lab desktop (labNN)** — or **Your Lab Server
-> desktop (labNN)** on a single-lab day) at `http://localhost:8081` and `http://localhost:8080` —
-> the same welcome page from two supply chains (the Chainguard build listens on 8080 because it
-> runs as a non-root user and can't bind 80). `docker rm -f oss cg` when you're done.
+> ▶ **DO (optional):** Then open **Firefox** on your desktop tile (**Core lab desktop (labNN)** — or
+> **Your Lab Server desktop (labNN)** on a single-lab day) at `http://localhost:8081` and
+> `http://localhost:8080`.
+>
+> ✅ **CHECK:** The same welcome page from two supply chains (the Chainguard build listens on 8080
+> because it runs as a non-root user and can't bind 80).
+>
+> ▶ **DO (optional):** `docker rm -f oss cg` when you're done.
 
 ---
 
 ## Lab 2 — The scan showdown (~20 min)
 
-Scan both images with grype. Record totals and Critical/High counts.
+Scan both images with grype.
 
-First, confirm your vulnerability data is current — the seat refreshes it at boot, and a
+✍️ **RECORD:** Totals and Critical/High counts.
+
+▶ **DO:** First, confirm your vulnerability data is current — the seat refreshes it at boot, and a
 scan is only as honest as its feed:
 
 ```bash
 grype db status
 ```
+
+▶ **DO:** Now scan both images:
 
 ```bash
 # upstream first — let it scroll
@@ -139,7 +166,7 @@ packages your app never calls. Same scanner, same day, same software — only th
 
 ## Lab 3 — Look inside (~15 min)
 
-Count what's inside each image, then try to get a shell in both.
+▶ **DO:** Count what's inside each image, then try to get a shell in both:
 
 ```bash
 # rough package inventory, upstream vs Chainguard
@@ -162,7 +189,7 @@ never in production.
 
 ## Lab 4 — Prove where it came from (~15 min)
 
-Verify the image signature with cosign, then export the SBOM your assessors will ask for.
+▶ **DO:** Verify the image signature with cosign, then export the SBOM your assessors will ask for:
 
 ```bash
 # verify the Sigstore signature on the public image
@@ -189,7 +216,7 @@ is the artifact trail continuous-ATO packages are built from.
 Ship a working app on a distroless base and *feel* the migration — one `FROM` line. Your files are
 in `~/labs/lab5` (`app.py` and a `Dockerfile` that **starts on the upstream base**).
 
-**Step 1 — build and scan the upstream version (the "before"):**
+▶ **DO:** **Step 1 — build and scan the upstream version (the "before"):**
 
 ```bash
 cd ~/labs/lab5
@@ -201,11 +228,13 @@ docker images | grep hello-oss   # note the size
 
 **Step 2 — migrate: change the one `FROM` line and rebuild (the "after"):**
 
-Edit `Dockerfile` and change the first line to:
+▶ **DO:** Edit `Dockerfile` and change the first line to:
 
 ```dockerfile
 FROM cgr.dev/chainguard/python:latest
 ```
+
+▶ **DO:** Rebuild, run and scan it:
 
 ```bash
 docker build -t hello-cg .
@@ -214,8 +243,9 @@ grype -q hello-cg | tail -n +2 | wc -l
 docker images | grep hello-cg    # smaller, near-zero findings
 ```
 
-The app code never changed — only the base. **Record hello-oss vs hello-cg** (size + findings) on
-the scorecard.
+The app code never changed — only the base.
+
+✍️ **RECORD:** **hello-oss vs hello-cg** (size + findings) on the scorecard.
 
 **The pattern for real apps** — build tooling in a `-dev` stage, distroless at runtime:
 
@@ -231,8 +261,9 @@ COPY app.py .
 ENTRYPOINT ["python", "app.py"]
 ```
 
-Build tooling lives only in the builder stage; the runtime image stays distroless. **Bring your own
-image? Migrate it now — swap its base, rebuild, and scan.**
+Build tooling lives only in the builder stage; the runtime image stays distroless.
+
+▶ **DO (optional):** **Bring your own image? Migrate it now — swap its base, rebuild, and scan.**
 
 ## Your scorecard
 
